@@ -17,10 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${beVietnamPro.variable} h-full antialiased dark`}
-    >
+    <html className={`${beVietnamPro.variable} h-full antialiased dark`}>
       <SidebarProvider>
         <AppSideBar />
         <body className="min-h-full flex flex-col p-4">
