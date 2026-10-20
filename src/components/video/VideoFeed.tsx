@@ -46,6 +46,14 @@ const mockVideos = [
 export default function VideoFeed() {
   const feedRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(true);
+
+  // Mọi player dùng chung âm lượng và trạng thái tắt tiếng của feed.
+  function handleVolumeChange(nextVolume: number, nextMuted: boolean) {
+    setVolume(nextVolume);
+    setMuted(nextMuted);
+  }
 
   useEffect(() => {
     const feed = feedRef.current;
@@ -96,6 +104,9 @@ export default function VideoFeed() {
             src={video.src}
             isActive={video.id === activeVideoId}
             title={`Video của ${video.username}`}
+            volume={volume}
+            muted={muted}
+            onVolumeChange={handleVolumeChange}
           />
           <div className="w-full max-w-[420px] shrink-0">
             <p className="font-semibold">@{video.username}</p>
