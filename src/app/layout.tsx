@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html className={`${beVietnamPro.variable} h-full antialiased dark`}>
       <body className="min-h-full p-4">
         <NextIntlClientProvider messages={messages}>
-          <SidebarProvider>
+          <SidebarProvider className="min-h-0">
             <AppSideBar />
             {children}
           </SidebarProvider>

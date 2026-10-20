@@ -1,7 +1,9 @@
+import VideoFeed from "@/components/video/VideoFeed";
+
 export default function Home() {
   return (
-    <div className="">
-      <main>Content</main>
-    </div>
+    <main className="min-w-0 flex-1">
+      <VideoFeed />
+    </main>
   );
 }
