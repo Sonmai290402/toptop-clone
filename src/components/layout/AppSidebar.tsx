@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +24,7 @@ import { cn } from "cn";
 
 const AppSideBar = () => {
   const t = useTranslations();
+  const pathname = usePathname();
   const { state } = useSidebar();
   const MENU_ITEMS = [
     { label: t("for-you"), href: "/", icon: <Home className="w-5! h-5!" /> },
@@ -38,19 +40,23 @@ const AppSideBar = () => {
     },
   ];
 
+  const isActive = (href: string) => {
+    return pathname === href;
+  };
+
   return (
     <Sidebar collapsible="icon" data-state={state}>
       <SidebarContent className="p-2">
         <div className="flex justify-between items-center">
-          {state === "expanded" && 
-          <Image
-            src="/images/Toptop_logo_dark.png"
-            alt="Logo"
-            width={150}
-            height={30}
-          />}
+          {state === "expanded" && (
+            <Image
+              src="/images/Toptop_logo_dark.png"
+              alt="Logo"
+              width={150}
+              height={30}
+            />
+          )}
           <SidebarTrigger />
-          
         </div>
         <div className="my-4">
           <InputGroup className="max-w-xs rounded-full">
@@ -58,7 +64,6 @@ const AppSideBar = () => {
             <InputGroupAddon>
               <Search />
             </InputGroupAddon>
-            {/* <InputGroupAddon align="inline-end">12 results</InputGroupAddon> */}
           </InputGroup>
         </div>
 
@@ -67,7 +72,10 @@ const AppSideBar = () => {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 render={<a href={item.href} />}
-                className="px-2 py-6"
+                className={cn(
+                  "px-2 py-6 mb-2 hover:text-primary",
+                  isActive(item.href) && "text-primary bg-accent",
+                )}
               >
                 {item.icon}
                 <span className="text-base ml-2">{item.label}</span>
@@ -77,7 +85,12 @@ const AppSideBar = () => {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2">
-        <div className={cn("flex gap-2 items-center", state === "collapsed" && "justify-center")}>
+        <div
+          className={cn(
+            "flex gap-2 items-center",
+            state === "collapsed" && "justify-center",
+          )}
+        >
           <Avatar size={state === "expanded" ? "lg" : "sm"}>
             <AvatarImage src="https://plus.unsplash.com/premium_photo-1677545183884-421157b2da02?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D" />
             <AvatarFallback>USER</AvatarFallback>

@@ -118,12 +118,6 @@ export default function VideoFeed() {
               time: video.time,
             }}
           />
-          {/* <div className="w-full max-w-[420px] shrink-0 absolute bottom-6 left-1/2 -translate-x-1/2 rounded-t-xl bg-gradient-to-t from-black/80 to-transparent text-white">
-            <p className="font-semibold">@{video.username}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {video.description}
-            </p>
-          </div> */}
         </section>
       ))}
     </div>
