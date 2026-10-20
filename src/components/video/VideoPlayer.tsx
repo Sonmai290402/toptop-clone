@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import VideoActions from "../common/VideoActions";
 
 type VideoPlayerProps = {
   src: string;
@@ -70,7 +71,7 @@ export default function VideoPlayer({
   }, [isActive]);
 
   return (
-    <div className="flex min-h-0 w-full max-w-[1100px] flex-1 items-center justify-center [container-type:size]">
+    <div className="flex gap-4 min-h-0 w-full max-w-[1100px] flex-1 items-center justify-center [container-type:size]">
       <div
         ref={frameRef}
         className="group/video relative overflow-hidden rounded-xl bg-black"
@@ -102,7 +103,7 @@ export default function VideoPlayer({
           preload="metadata"
           className="block h-full w-full object-contain"
         />
-        <div className="absolute bottom-0 left-0 w-full rounded-t-xl bg-black/30 p-3 text-white transition-[bottom] duration-400 group-hover/video:bottom-[66px]">
+        <div className="absolute bottom-0 left-0 w-full bg-black/50 p-3 text-white transition-[bottom] duration-400 group-hover/video:bottom-[66px]">
           <div className="flex items-center">
             <p className="font-semibold">{info.username}</p>
             {info.time && (
@@ -112,6 +113,8 @@ export default function VideoPlayer({
           <p className="text-sm">{info.description}</p>
         </div>
       </div>
+
+      <VideoActions />
     </div>
   );
 }
