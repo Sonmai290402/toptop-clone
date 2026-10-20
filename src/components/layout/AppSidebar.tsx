@@ -17,8 +17,6 @@ import {
   Compass,
   Home,
   Search,
-  Settings,
-  ToggleLeft,
   UserCheck,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "cn";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
+import { Switch } from "../ui/switch";
 
 const AppSideBar = () => {
   const t = useTranslations();
@@ -68,8 +67,8 @@ const AppSideBar = () => {
           )}
           <SidebarTrigger />
         </div>
-        <div className="my-4">
-          <InputGroup className="max-w-xs rounded-full">
+        <div className="my-8">
+          <InputGroup className={cn("max-w-xs rounded-full", state === "expanded" && "py-6 px-2")}>
             <InputGroupInput placeholder={t("search")} />
             <InputGroupAddon>
               <Search />
@@ -83,7 +82,7 @@ const AppSideBar = () => {
               <SidebarMenuButton
                 render={<a href={item.href} />}
                 className={cn(
-                  "px-2 py-6 mb-2 hover:text-primary",
+                  "px-4 py-6 mb-2 hover:text-primary rounded-full",
                   isActive(item.href) && "text-primary bg-accent",
                 )}
               >
@@ -97,7 +96,7 @@ const AppSideBar = () => {
       <SidebarFooter
         className={cn(
           "p-2",
-          state === "expanded" ? "bg-accent rounded-lg m-2" : "items-center",
+          state === "expanded" ? "bg-accent rounded-full m-2" : "items-center",
         )}
       >
         <Popover>
@@ -136,8 +135,9 @@ const AppSideBar = () => {
             <p> Xem hồ Sơ</p>
             <div className="flex gap-2">
               <span>Dark</span>
-              <ToggleLeft />
+              <Switch />
             </div>
+            <p>Language</p>
             <p>Đăng xuất</p>
           </PopoverContent>
         </Popover>

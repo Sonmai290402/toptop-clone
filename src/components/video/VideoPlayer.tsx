@@ -103,7 +103,7 @@ export default function VideoPlayer({
           preload="metadata"
           className="block h-full w-full object-contain"
         />
-        <div className="absolute bottom-0 left-0 w-full bg-black/50 p-3 text-white transition-[bottom] duration-400 group-hover/video:bottom-[66px]">
+        <div className="absolute bottom-0 left-0 w-full group-hover/video:bg-black/50 p-3 text-white transition-[bottom] duration-400 group-hover/video:bottom-[66px]">
           <div className="flex items-center">
             <p className="font-semibold">{info.username}</p>
             {info.time && (
