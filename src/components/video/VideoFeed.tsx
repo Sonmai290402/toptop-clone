@@ -22,24 +22,29 @@ const mockVideos = [
     src: "/demo-videos/demo-video-3.mp4",
     username: "linhchi",
     description: "Hôm nay có gì thú vị?",
+    time: "2 giờ trước",
   },
   {
     id: "4",
     src: "/demo-videos/demo-video-4.mp4",
     username: "tuananh",
     description: "Một video nhỏ để chia sẻ cùng bạn.",
+    time: "1 ngày trước",
   },
   {
     id: "5",
     src: "/demo-videos/demo-video-5.mp4",
     username: "tuikycuc",
-    description: "Một video nhỏ để chia sẻ cùng bạn.",
+    description:
+      "lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    time: "3 ngày trước",
   },
   {
     id: "6",
     src: "/demo-videos/demo-video-6.mp4",
     username: "tuikycuc123",
     description: "Một video nhỏ để chia sẻ cùng bạn.",
+    time: "17/10",
   },
 ];
 
@@ -98,7 +103,7 @@ export default function VideoFeed() {
           key={video.id}
           data-video-id={video.id}
           aria-label={`Video của ${video.username}`}
-          className="flex h-full snap-start snap-always flex-col items-center gap-3 px-2 py-3 sm:px-6"
+          className="flex h-full snap-start snap-always flex-col items-center gap-3 px-2 py-3 sm:px-6 relative"
         >
           <VideoPlayer
             src={video.src}
@@ -107,13 +112,18 @@ export default function VideoFeed() {
             volume={volume}
             muted={muted}
             onVolumeChange={handleVolumeChange}
+            info={{
+              username: video.username,
+              description: video.description,
+              time: video.time,
+            }}
           />
-          <div className="w-full max-w-[420px] shrink-0">
+          {/* <div className="w-full max-w-[420px] shrink-0 absolute bottom-6 left-1/2 -translate-x-1/2 rounded-t-xl bg-gradient-to-t from-black/80 to-transparent text-white">
             <p className="font-semibold">@{video.username}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {video.description}
             </p>
-          </div>
+          </div> */}
         </section>
       ))}
     </div>
