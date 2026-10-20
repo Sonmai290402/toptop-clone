@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "@/components/layout/AppSidebar";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 
-const beVietnamPro = Be_Vietnam_Pro({
-  variable: "--font-be",
-  weight: ["400", "500", "600", "700", "800", "900"],
+const manrope = Manrope({
+  variable: "--font-manrope",
 });
 
 export const metadata: Metadata = {
@@ -21,7 +20,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const messages = await getMessages();
 
   return (
-    <html className={`${beVietnamPro.variable} h-full antialiased dark`}>
+    <html className={`${manrope.variable} h-full antialiased dark`}>
       <body className="min-h-full p-4">
         <NextIntlClientProvider messages={messages}>
           <SidebarProvider className="min-h-0">
