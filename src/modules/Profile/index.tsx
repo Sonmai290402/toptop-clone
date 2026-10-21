@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import ProfileHeader from "./Components/ProfileHeader";
 import type { UserData } from "@/types/user.types";
+import ProfileContent from "./Components/ProfileContent";
 
 const Profile = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -11,7 +12,7 @@ const Profile = () => {
   try {
     id = decodeURIComponent(userId);
   } catch {
-    // Giữ nguyên ID nếu nó chứa dấu % không phải chuỗi mã hóa URL hợp lệ.
+    // Giữ nguyên ID nếu giá trị không phải chuỗi mã hóa URL hợp lệ.
   }
 
   const userData: UserData = {
@@ -25,8 +26,9 @@ const Profile = () => {
   };
 
   return (
-    <div>
+    <div className="mx-auto w-full min-w-0 max-w-[1296px] flex-1 space-y-6">
       <ProfileHeader userData={userData} />
+      <ProfileContent />
     </div>
   );
 };
