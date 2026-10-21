@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "@/components/layout/AppSidebar";
@@ -24,7 +25,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full p-4">
         <NextIntlClientProvider messages={messages}>
           <SidebarProvider className="min-h-0">
-            <AppSideBar />
+            <Suspense fallback={null}>
+              <AppSideBar />
+            </Suspense>
             {children}
           </SidebarProvider>
         </NextIntlClientProvider>
