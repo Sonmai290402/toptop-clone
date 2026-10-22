@@ -96,14 +96,14 @@ export default function VideoFeed() {
       role="region"
       aria-label="Danh sách video demo"
       tabIndex={0}
-      className="h-[calc(100dvh-2rem)] snap-y snap-mandatory overflow-y-auto overscroll-y-contain rounded-xl focus-visible:outline-2 focus-visible:outline-ring"
+      className="h-[calc(100dvh-2rem)] w-full min-w-0 snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-y-contain rounded-xl focus-visible:outline-2 focus-visible:outline-ring"
     >
       {mockVideos.map((video) => (
         <section
           key={video.id}
           data-video-id={video.id}
           aria-label={`Video của ${video.username}`}
-          className="flex h-full snap-start snap-always flex-col items-center gap-3 px-2 py-3 sm:px-6 relative"
+          className="relative flex h-full min-h-0 min-w-0 snap-start snap-always flex-col items-center px-2 py-3 sm:px-4"
         >
           <VideoPlayer
             src={video.src}

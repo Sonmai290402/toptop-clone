@@ -18,7 +18,7 @@ const VideoActions = () => {
     },
   ];
   return (
-    <div className="flex flex-col gap-8 justify-center items-center">
+    <div className="flex shrink-0 flex-col items-center justify-center gap-8">
       <div className="relative border border-primary rounded-full background-accent">
         <Avatar size="lg">
           <AvatarImage
