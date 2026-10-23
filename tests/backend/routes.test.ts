@@ -46,6 +46,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       return Response.json(invalidToken ? { code: "bad_jwt", message: "Invalid JWT" } : authUser, { status: invalidToken ? 401 : 200 });
     }
     if (["/auth/v1/logout", "/auth/v1/recover", "/auth/v1/resend"].includes(url.pathname)) return Response.json({});
+    if (url.pathname === "/rest/v1/profiles") return Response.json({ username: "alice", display_name: "Alice", avatar_url: null });
     if (url.pathname === "/auth/v1/token") {
       const expiresAt = Math.floor(Date.now() / 1000) + 3600;
       const token = [Buffer.from('{"alg":"HS256"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: userId, exp: expiresAt })).toString("base64url"), "testsignature"].join(".");

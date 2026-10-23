@@ -16,7 +16,9 @@ const post = <T>(path: string, body?: unknown) => apiFetch<ApiResponse<T>>(path,
 });
 export const signIn = (input: SignInInput) => post<AuthResult>("/auth/sign-in", input);
 export const signUp = (input: SignUpInput) => post<AuthResult>("/auth/sign-up", input);
-export const startGoogleSignIn = () => post<{ url: string }>("/auth/google");
+export const startGoogleSignIn = () => apiFetch<ApiResponse<{ url: string }>>("/auth/google", {
+  method: "POST", signal: AbortSignal.timeout(15_000),
+});
 export const signOut = () => apiFetch<void>("/auth/sign-out", { method: "POST" });
 export const resendConfirmation = (email: string) => post<{ message: string }>("/auth/resend", { email });
 export const forgotPassword = (email: string) => post<{ message: string }>("/auth/forgot-password", { email });

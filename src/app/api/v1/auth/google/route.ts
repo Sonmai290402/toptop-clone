@@ -9,7 +9,7 @@ const startGoogle = api(async (_request, { db }) => {
   const { data, error } = await db.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${getConfig().origin}/api/v1/auth/callback`,
+      redirectTo: `${getConfig().origin}/api/v1/auth/callback?flow=google`,
       skipBrowserRedirect: true,
       queryParams: { prompt: "select_account" },
     },

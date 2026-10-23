@@ -9,12 +9,15 @@ import { Input } from "@/components/ui/input";
 import { forgotPassword, resendConfirmation, signIn, signUp } from "@/lib/api/auth.api";
 import { useAuth, type AuthMode } from "@/providers/AuthProvider";
 import { ApiClientError } from "@/lib/api/client";
+import GoogleSignInButton from "./GoogleSignInButton";
+import { useGoogleSignIn } from "@/hooks/useGoogleSignIn";
 
 export default function AuthDialog({ open, mode, reason, onClose, onModeChange }: {
   open: boolean; mode: AuthMode; reason?: string;
   onClose: () => void; onModeChange: (mode: AuthMode) => void;
 }) {
   const { completeSignIn } = useAuth();
+  const google = useGoogleSignIn();
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
@@ -51,13 +54,14 @@ export default function AuthDialog({ open, mode, reason, onClose, onModeChange }
       setMessage(result.data.message);
     },
   });
-  const busy = submit.isPending || resend.isPending;
+  const busy = submit.isPending || resend.isPending || google.isRedirecting;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     const form = new FormData(event.currentTarget);
     setValidationError("");
+    google.reset();
     if (isSignup && form.get("password") !== form.get("confirmPassword")) {
       setValidationError("Mật khẩu nhập lại chưa khớp.");
       return;
@@ -77,6 +81,15 @@ export default function AuthDialog({ open, mode, reason, onClose, onModeChange }
           <Dialog.Description className="mt-3 text-sm text-muted-foreground">
             {reason ?? "Đăng nhập để thích, lưu video, theo dõi và tham gia bình luận."}
           </Dialog.Description>
+          {!isForgot && !message && <div className="mt-6 space-y-4">
+            <GoogleSignInButton pending={google.isRedirecting} disabled={busy} onClick={() => {
+              setValidationError(""); submit.reset(); resend.reset(); google.mutate();
+            }} />
+            {google.error && <p role="alert" className="text-sm text-destructive">{google.error.message}</p>}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />hoặc tiếp tục với email<span className="h-px flex-1 bg-border" />
+            </div>
+          </div>}
           {message ? (
             <div className="mt-6 space-y-4">
               <p role="status" className="rounded-xl bg-muted p-4 text-sm leading-6">{message}</p>

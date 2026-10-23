@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSession, signOut } from "@/lib/api/auth.api";
 import type { AuthUser } from "@/types/auth.types";
@@ -57,12 +57,17 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     return () => { channel.current = null; connection.close(); };
   }, [client]);
 
-  async function replaceSession(nextUser: AuthUser | null) {
+  const replaceSession = useCallback(async (nextUser: AuthUser | null) => {
     await client.cancelQueries();
     client.removeQueries({ predicate: (query) => query.queryKey[0] !== "auth" });
     client.setQueryData(sessionKey, { data: { user: nextUser } });
     channel.current?.postMessage("session-changed");
-  }
+  }, [client]);
+
+  const completeSignIn = useCallback(async (nextUser: AuthUser) => {
+    await replaceSession(nextUser);
+    setDialog(null);
+  }, [replaceSession]);
 
   const logout = useMutation({
     mutationFn: signOut,
@@ -82,7 +87,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         openAuth("sign-in", reason);
         return false;
       },
-      completeSignIn: async (nextUser) => { await replaceSession(nextUser); setDialog(null); },
+      completeSignIn,
       logout: () => logout.mutate(),
       isSigningOut: logout.isPending,
       signOutError: logout.error,
