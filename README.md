@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Backend
+
+Backend cơ bản dùng Next.js + Supabase PostgreSQL/Auth/Storage, chưa tích hợp vào frontend.
+Xem [API documentation](docs/API.md) để cấu hình Supabase, chạy migration/seed và sử dụng từng endpoint.
+
+```bash
+pnpm test:backend
+pnpm lint:backend
+```
+
 ## Getting Started
 
 First, run the development server:

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import VideoActions from "../common/VideoActions";
 import Comments from "../common/Comments";
+import { DEMO_COMMENTS_VIDEO_ID } from "@/lib/demo";
 
 type VideoPlayerProps = {
   src: string;
@@ -125,7 +126,7 @@ export default function VideoPlayer({
         <VideoActions />
       </div>
 
-      <Comments />
+      <Comments videoId={DEMO_COMMENTS_VIDEO_ID} />
     </div>
   );
 }

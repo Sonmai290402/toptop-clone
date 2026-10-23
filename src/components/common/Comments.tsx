@@ -1,9 +1,26 @@
+"use client";
+
 import { Filter, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import CommentForm from "./CommentForm";
 import { Card } from "../ui/card";
+import { Button } from "../ui/button";
+import { useComments } from "@/hooks/queries/useComments";
 
-const Comments = () => {
+const Comments = ({ videoId }: { videoId: string }) => {
+  const {
+    data,
+    isPending,
+    error,
+    isFetching,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+  } = useComments(videoId);
+  const comments = data?.pages.flatMap((page) => page.data) ?? [];
+
   return (
     <Card
       aria-label="Comments"
@@ -15,28 +32,68 @@ const Comments = () => {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4">
-        <div className="flex items-start gap-2">
-          <Avatar>
-            <AvatarImage src="https://plus.unsplash.com/premium_photo-1764194629423-2a8f29c825e4?q=80&w=685&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D" />
-            <AvatarFallback>User</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1 wrap-anywhere">
-            <span className="text-sm font-semibold">Tui ky cuc 543</span>
-            <p className="mt-1 text-sm leading-relaxed">
-              lorem picsum lorem picsum lorem picsum lorem picsum
-            </p>
-
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span className="text-xs text-muted-foreground">
-                  2 hours ago
-                </span>
-                <span className="text-xs text-accent-foreground">Reply</span>
-              </div>
-              <Heart className="size-3 shrink-0" />
-            </div>
+        {isPending && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Đang tải bình luận...
+          </p>
+        )}
+        {error && (
+          <div role="alert" className="mb-4 space-y-2 text-sm">
+            <p>{error.message}</p>
+            <Button
+              variant="outline"
+              disabled={isFetching}
+              onClick={() => void (isFetchNextPageError ? fetchNextPage() : refetch())}
+            >
+              Thử lại
+            </Button>
           </div>
+        )}
+        {!isPending && !error && comments.length === 0 && (
+          <p className="text-sm text-muted-foreground">Chưa có bình luận nào.</p>
+        )}
+        <div className="space-y-5">
+          {comments.map((comment) => (
+            <div key={comment.id} className="flex items-start gap-2">
+              <Avatar>
+                <AvatarImage
+                  src={comment.author.avatarUrl ?? undefined}
+                  alt={comment.author.displayName}
+                />
+                <AvatarFallback>
+                  {comment.author.displayName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1 wrap-anywhere">
+                <span className="text-sm font-semibold">{comment.author.displayName}</span>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
+                  {comment.content}
+                </p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    <time dateTime={comment.createdAt} className="text-xs text-muted-foreground">
+                      {new Date(comment.createdAt).toLocaleDateString("vi-VN", {
+                        timeZone: "Asia/Ho_Chi_Minh",
+                      })}
+                    </time>
+                    <span className="text-xs text-accent-foreground">Reply</span>
+                  </div>
+                  <Heart className="size-3 shrink-0" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
+        {hasNextPage && (
+          <Button
+            className="mt-4 w-full"
+            variant="ghost"
+            disabled={isFetching}
+            onClick={() => void fetchNextPage()}
+          >
+            {isFetchingNextPage ? "Đang tải..." : "Xem thêm bình luận"}
+          </Button>
+        )}
       </div>
       <footer className="shrink-0 border-t border-border p-3 sm:p-4">
         <CommentForm />
