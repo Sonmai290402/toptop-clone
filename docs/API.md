@@ -1,11 +1,13 @@
 # Backend API — Toptop
 
 Backend cơ bản sử dụng **Next.js Route Handlers + Supabase PostgreSQL/Auth/Storage + Zod**.
-Frontend vẫn dùng mock data. Không có component, page hoặc hook frontend nào gọi các API này.
+Frontend đã tích hợp auth và đọc bình luận bằng TanStack Query. Video feed/profile vẫn dùng mock data.
+Xem `docs/AUTH.md` cho luồng UI, cấu hình email và role.
 
 ## 1. Phạm vi đã triển khai
 
 - Đăng ký, đăng nhập, đăng xuất, đọc session, refresh session và callback xác nhận email.
+- Gửi lại email xác nhận, quên/đổi mật khẩu, role ứng dụng `user` và `admin`.
 - Feed mới nhất, feed Following, chi tiết video.
 - Profile theo username; đọc/sửa profile của chính mình.
 - Video theo tác giả; sắp xếp latest/oldest/popular, ghim trước khi phân trang.
@@ -16,8 +18,8 @@ Frontend vẫn dùng mock data. Không có component, page hoặc hook frontend 
 - Migration và script seed 2 tài khoản, 4 video demo, 1 bình luận.
 - Chuẩn bị bucket `videos`, `thumbnails`, `avatars` trong Storage.
 
-**Chưa triển khai:** upload/đăng/sửa/xóa video, tăng lượt xem, thay đổi ghim, đổi username/email/password,
-quên mật khẩu, thích/trả lời bình luận, tìm kiếm, notification, realtime, xử lý/nén video, frontend auth.
+**Chưa triển khai:** upload/đăng/sửa/xóa video, tăng lượt xem, thay đổi ghim, đổi username/email,
+thích/trả lời bình luận, tìm kiếm, notification, realtime, xử lý/nén video, màn hình quản trị.
 Storage chưa mở quyền upload cho user. Chuẩn bị bucket không đồng nghĩa đã có API upload.
 
 ## 2. Cấu hình Supabase từ đầu
@@ -43,6 +45,8 @@ Không commit `.env.local`. API không dùng secret/service-role key.
 **Cách đơn giản với Supabase Dashboard:** mở SQL Editor, chạy toàn bộ file
 `supabase/migrations/20261023000100_backend.sql` **một lần** trên project mới.
 File tạo bảng, index, trigger tạo profile khi đăng ký, policy RLS, RPC và bucket.
+Sau đó chạy `supabase/migrations/20261023000200_user_roles.sql` một lần để đặt role
+mặc định cho tài khoản cũ/mới. Nếu đã có migration đầu, chỉ chạy migration role mới.
 Migration không phải script chạy lặp; thay đổi tiếp theo cần migration mới.
 
 **Hoặc dùng Supabase CLI** sau khi cài CLI theo tài liệu chính thức:
@@ -65,12 +69,15 @@ Trong Supabase Authentication:
 - Bật provider Email/password; nên bật Confirm email.
 - Site URL: `http://localhost:3000`.
 - Thêm Redirect URL: `http://localhost:3000/api/v1/auth/callback`.
+- Thêm Redirect URL reset password: `http://localhost:3000/api/v1/auth/callback?flow=recovery`.
 - Khi deploy, cập nhật cả hai sang domain thực.
 - Giữ template confirmation dùng `{{ .ConfirmationURL }}` để Supabase hoàn tất xác nhận rồi redirect về callback.
 - Khi dùng email ngoài môi trường thử nghiệm, cấu hình SMTP và kiểm tra giới hạn gửi email của project.
 
 API đăng ký sử dụng PKCE. Link xác nhận cần mở trong cùng browser/cookie jar đã đăng ký.
-Callback hiện trả JSON vì chưa tích hợp giao diện điều hướng sau đăng nhập.
+Callback trả JSON cho API client; với browser (`Accept: text/html`) điều hướng đến
+`/auth/confirmed` hoặc `/auth/reset-password`. Template dùng token hash để mở link
+trên thiết bị khác được hướng dẫn trong `docs/AUTH.md`.
 Đăng ký bằng Postman rồi mở email ở browser khác sẽ không có cookie PKCE; hãy xác nhận email,
 sau đó đăng nhập qua `/auth/sign-in`, hoặc dùng các tài khoản seed đã được xác nhận.
 
@@ -126,12 +133,14 @@ API nghiệp vụ hỗ trợ:
 2. **Bearer token**: gửi `Authorization: Bearer <accessToken>` lấy từ kết quả đăng nhập.
 
 Bearer có ưu tiên nếu request đồng thời có cookie. Token không hợp lệ trả 401, kể cả ở API đọc công khai;
-không tự hạ xuống người dùng ẩn danh. User ID của thao tác luôn lấy từ session được Supabase xác thực.
+không tự hạ xuống người dùng ẩn danh. Cookie hết hạn ở API đọc công khai được xử lý như khách;
+API yêu cầu đăng nhập vẫn trả 401. User ID của thao tác luôn lấy từ session được Supabase xác thực.
 
-Các endpoint signup/signin/signout/refresh/callback dùng cookie, **không nhận header Authorization**.
+Các endpoint signup/signin/signout/refresh/callback/resend/forgot-password/password dùng cookie, **không nhận header Authorization**.
 Endpoint `/auth/session` nhận cả hai kiểu xác thực. Refresh token được giữ trong cookie Supabase,
 không trả thành field JSON. API chạy trong Route Handler cập nhật cookie khi refresh;
-chưa thêm proxy cho các page frontend vì frontend chưa dùng Supabase.
+AuthProvider kiểm tra session khi tải trang, khi focus và định kỳ trong lúc tab hoạt động;
+frontend không lưu token vào localStorage. Kiểm tra quyền thật nằm ở API/RLS, không nằm ở UI gate.
 
 ### Origin và body
 
@@ -218,7 +227,7 @@ Thành công **200**, kèm cookie:
 ```json
 {
   "data": {
-    "user": { "id": "UUID", "email": "demo_linhchi@example.com" },
+    "user": { "id": "UUID", "email": "demo_linhchi@example.com", "username": "demo_linhchi", "displayName": "Linh Chi", "avatarUrl": null, "role": "user" },
     "session": { "accessToken": "ACCESS_TOKEN", "tokenType": "bearer", "expiresAt": 1790000000 }
   }
 }
@@ -228,8 +237,8 @@ Sai thông tin: 401; chưa xác nhận email: 403; vượt giới hạn Supabase
 
 ### GET `/auth/session`
 
-Trả **200** `{data:{user:{id,email}}}` sau khi xác thực session với Supabase.
-Không có session: `{data:{user:null}}`. Session/token không hợp lệ: 401.
+Trả **200** `{data:{user:{id,email,username,displayName,avatarUrl,role}}}` sau khi xác thực session với Supabase.
+Không có session/cookie hết hạn: `{data:{user:null}}`. Bearer không hợp lệ: 401.
 
 ### POST `/auth/refresh`
 
@@ -245,7 +254,35 @@ client phải bỏ bản token đang giữ sau khi logout.
 ### GET `/auth/callback?code=...`
 
 Dành cho Supabase redirect sau xác nhận email. Cần cookie PKCE của lần signup.
-Đổi code lấy session, ghi cookie, trả **200** cùng cấu trúc signin. Code dùng một lần.
+Đổi code lấy session, ghi cookie, trả **200** cùng cấu trúc signin cho API client. Code dùng một lần.
+Browser nhận 303 đến `/auth/confirmed` (hoặc `/auth/reset-password` khi `flow=recovery`).
+Lỗi browser chuyển đến `/auth/confirmed?error=1`. Không hỗ trợ redirect tùy ý.
+Cũng nhận `?token_hash=...&type=email|signup|recovery` cho template email tùy chỉnh.
+
+### POST `/auth/resend`
+
+JSON `{ "email": "ban@example.com" }`, không cần đăng nhập, cần Origin.
+Gửi lại email xác nhận đăng ký. Trả **200** `{data:{message}}`, lỗi giới hạn gửi **429**.
+
+### POST `/auth/forgot-password`
+
+JSON `{ "email": "ban@example.com" }`, không cần đăng nhập, cần Origin.
+Gửi liên kết khôi phục. Trả **200** `{data:{message}}` với thông báo chung để tránh xác nhận email có tài khoản.
+Mở liên kết email để tạo phiên recovery trước khi cập nhật mật khẩu.
+
+### POST `/auth/password`
+
+JSON `{ "password": "MatKhauMoiDu8KyTu" }`, cần cookie đăng nhập/recovery hợp lệ và Origin.
+Mật khẩu 8–128 ký tự. Trả **200** `{data:{message}}`; chưa xác thực trả **401**.
+Endpoint này cũng cho phép người đang đăng nhập đổi mật khẩu của chính mình.
+
+### Role ứng dụng
+
+Role lấy từ `auth.users.raw_app_meta_data.app_role`, chỉ giá trị `admin` được xem là admin;
+thiếu/giá trị khác mặc định `user`. Không dùng `user_metadata.role` hoặc JWT database role.
+Form đăng ký không nhận role. Chỉ SQL Editor/server có quyền quản trị được gán admin.
+Không có endpoint tự đổi role hay quyền admin vượt qua ownership trong API hiện tại.
+Helper `requireRole` dành cho các endpoint quản trị khi xây dựng sau; không thay thế RLS.
 Thiếu code: 400. Không gọi API này như API đăng nhập thông thường.
 
 ## 5. Video và profile API

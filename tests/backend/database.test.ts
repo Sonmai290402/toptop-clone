@@ -14,17 +14,25 @@ test("SQL migration, permissions, pagination and interactions", async (t) => {
     await db.exec(`
       create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth; create schema storage;
-      create table auth.users(id uuid primary key, raw_user_meta_data jsonb default '{}');
+      create table auth.users(id uuid primary key, raw_user_meta_data jsonb default '{}', raw_app_meta_data jsonb default '{}');
       create function auth.uid() returns uuid language sql stable as
         $$select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid$$;
       grant usage on schema auth to anon, authenticated;
       create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
     `);
     await db.exec(await readFile(new URL("../../supabase/migrations/20261023000100_backend.sql", import.meta.url), "utf8"));
-    await db.query("insert into auth.users values ($1, $2), ($3, $4)", [
+    await db.exec(await readFile(new URL("../../supabase/migrations/20261023000200_user_roles.sql", import.meta.url), "utf8"));
+    await db.query("insert into auth.users(id, raw_user_meta_data) values ($1, $2), ($3, $4)", [
       alice, JSON.stringify({ username: "alice", display_name: "Alice" }),
       bob, JSON.stringify({ username: "bob", display_name: "Bob" }),
     ]);
+    await t.test("new accounts default to user and clients cannot edit application roles", async () => {
+      const row = await db.query<{ raw_app_meta_data: { app_role: string } }>("select raw_app_meta_data from auth.users where id = $1", [alice]);
+      assert.equal(row.rows[0].raw_app_meta_data.app_role, "user");
+      await db.exec("set role authenticated");
+      await assert.rejects(db.query("update auth.users set raw_app_meta_data = '{\"app_role\":\"admin\"}' where id = $1", [alice]), /permission denied/);
+      await db.exec("reset role");
+    });
     for (let i = 0; i < videoIds.length; i++) {
       await db.query(`insert into public.videos(id, author_id, video_url, is_pinned, is_published, view_count, created_at)
         values ($1, $2, '/demo.mp4', $3, $4, $5, $6)`,

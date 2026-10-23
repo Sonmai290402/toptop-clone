@@ -7,6 +7,7 @@ import AppSideBar from "@/components/layout/AppSidebar";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import QueryProvider from "@/providers/QueryProvider";
+import AuthProvider from "@/providers/AuthProvider";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -26,12 +27,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full p-4">
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <SidebarProvider className="min-h-0">
-              <Suspense fallback={null}>
-                <AppSideBar />
-              </Suspense>
-              {children}
-            </SidebarProvider>
+            <AuthProvider>
+              <SidebarProvider className="min-h-0">
+                <Suspense fallback={null}>
+                  <AppSideBar />
+                </Suspense>
+                {children}
+              </SidebarProvider>
+            </AuthProvider>
           </QueryProvider>
         </NextIntlClientProvider>
       </body>

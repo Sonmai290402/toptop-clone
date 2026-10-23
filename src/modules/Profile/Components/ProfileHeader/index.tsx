@@ -1,3 +1,6 @@
+"use client";
+
+import { useAuth } from "@/providers/AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { UserData } from "@/types/user.types";
@@ -8,6 +11,8 @@ type ProfileHeaderProps = {
 };
 
 const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
+  const { requireAuth, user, isLoading } = useAuth();
+  const isOwner = !!user && userData.id.replace(/^@/, "") === user.username;
   return (
     <section className="flex gap-6 items-center">
       <Avatar className="w-40 h-40">
@@ -30,12 +35,12 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
           </div>
         </div>
         <div className="flex gap-4">
-          <Button variant="secondary" className="h-10">
-            Edit Profile
+          <Button variant="secondary" disabled={isLoading} onClick={() => requireAuth(isOwner ? "Đăng nhập để sửa hồ sơ." : "Đăng nhập để theo dõi.")} className="h-10">
+            {isOwner ? "Edit Profile" : "Follow"}
           </Button>
-          <Button variant="secondary" className="h-10 px-3">
+          {isOwner && <Button variant="secondary" aria-label="Cài đặt hồ sơ" onClick={() => requireAuth()} className="h-10 px-3">
             <Settings className="w-5! h-5!" />
-          </Button>
+          </Button>}
           <Button variant="secondary" className="h-10 px-3">
             <Forward className="w-5! h-5!" />
           </Button>

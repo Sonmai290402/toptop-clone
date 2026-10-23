@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import SidebarAccount from "@/components/auth/SidebarAccount";
+import { useAuth } from "@/providers/AuthProvider";
 import { usePathname } from "next/navigation";
 import {
   Sidebar,
@@ -13,7 +16,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  ChevronsUpDown,
   Compass,
   Home,
   Search,
@@ -25,16 +27,13 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "../ui/input-group";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "cn";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
-import { Switch } from "../ui/switch";
 
 const AppSideBar = () => {
   const t = useTranslations();
   const pathname = usePathname();
   const { state } = useSidebar();
+  const { requireAuth, isLoading } = useAuth();
   const MENU_ITEMS = [
     { label: t("for-you"), href: "/", icon: <Home className="w-5! h-5!" /> },
     {
@@ -80,7 +79,11 @@ const AppSideBar = () => {
           {MENU_ITEMS.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
-                render={<a href={item.href} />}
+                render={<Link href={item.href} />}
+                aria-disabled={item.href === "/following" && isLoading}
+                onClick={(event) => {
+                  if (item.href === "/following" && !requireAuth("Đăng nhập để xem các tài khoản bạn theo dõi.")) event.preventDefault();
+                }}
                 className={cn(
                   "px-4 py-6 mb-2 hover:text-primary rounded-full",
                   isActive(item.href) && "text-primary bg-accent",
@@ -93,54 +96,8 @@ const AppSideBar = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter
-        className={cn(
-          "p-2",
-          state === "expanded" ? "bg-accent rounded-full m-2" : "items-center",
-        )}
-      >
-        <Popover>
-          <PopoverTrigger
-            render={
-              <div className="flex items-center justify-between gap-2 cursor-pointer">
-                <div
-                  className={cn(
-                    "flex gap-2 items-center",
-                    state === "collapsed" && "justify-center",
-                  )}
-                >
-                  <Avatar size={state === "expanded" ? "lg" : "sm"}>
-                    <AvatarImage src="https://plus.unsplash.com/premium_photo-1677545183884-421157b2da02?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D" />
-                    <AvatarFallback>USER</AvatarFallback>
-                  </Avatar>
-                  {state === "expanded" && (
-                    <div>
-                      <p>Username</p>
-                      <p className="text-sm text-muted-foreground">
-                        @tuikycuc2847124
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {state === "expanded" && (
-                  <Button variant="ghost" size="icon">
-                    <ChevronsUpDown />
-                  </Button>
-                )}
-              </div>
-            }
-          />
-          <PopoverContent className="w-30" align="end">
-            <p> Xem hồ Sơ</p>
-            <div className="flex gap-2">
-              <span>Dark</span>
-              <Switch />
-            </div>
-            <p>Language</p>
-            <p>Đăng xuất</p>
-          </PopoverContent>
-        </Popover>
+      <SidebarFooter className="p-2">
+        <SidebarAccount collapsed={state === "collapsed"} />
       </SidebarFooter>
     </Sidebar>
   );

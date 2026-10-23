@@ -6,8 +6,10 @@ import CommentForm from "./CommentForm";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { useComments } from "@/hooks/queries/useComments";
+import { useAuth } from "@/providers/AuthProvider";
 
 const Comments = ({ videoId }: { videoId: string }) => {
+  const { requireAuth, isLoading } = useAuth();
   const {
     data,
     isPending,
@@ -24,6 +26,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
   return (
     <Card
       aria-label="Comments"
+      tabIndex={-1}
       className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden py-0"
     >
       <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
@@ -76,9 +79,9 @@ const Comments = ({ videoId }: { videoId: string }) => {
                         timeZone: "Asia/Ho_Chi_Minh",
                       })}
                     </time>
-                    <span className="text-xs text-accent-foreground">Reply</span>
+                    <button type="button" disabled={isLoading} onClick={() => requireAuth("Đăng nhập để trả lời bình luận.")} className="text-xs text-accent-foreground hover:text-primary">Reply</button>
                   </div>
-                  <Heart className="size-3 shrink-0" />
+                  <button type="button" aria-label="Thích bình luận" disabled={isLoading} onClick={() => requireAuth("Đăng nhập để thích bình luận.")}><Heart className="size-3 shrink-0" /></button>
                 </div>
               </div>
             </div>

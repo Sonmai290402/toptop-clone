@@ -22,7 +22,7 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/api/v1/auth/callback"]
+additional_redirect_urls = ["http://localhost:3000/api/v1/auth/callback", "http://localhost:3000/api/v1/auth/callback?flow=recovery"]
 jwt_expiry = 3600
 enable_signup = true
 minimum_password_length = 8

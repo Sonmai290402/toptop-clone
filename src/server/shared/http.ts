@@ -1,6 +1,7 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { createRequestClient } from "@/lib/supabase/server";
 import { getConfig } from "../config";
 import { ApiError } from "./errors";
@@ -35,19 +36,27 @@ export function api(
       }
       assertOrigin(request, config.origin, authorization !== null && !options.cookieOnly);
       client = createRequestClient(request);
+      let db = client.supabase;
       let user: User | null = null;
       if (options.auth !== "none") {
         const { data, error } = await client.supabase.auth.getUser(client.token);
         if (error && error.name !== "AuthSessionMissingError") {
           if (error.status && error.status >= 500) throw new ApiError(503, "AUTH_UNAVAILABLE", "Không thể kết nối dịch vụ xác thực.");
-          throw new ApiError(401, "INVALID_SESSION", "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+          if (options.auth === "required" || client.token) {
+            throw new ApiError(401, "INVALID_SESSION", "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+          }
+          // Expired cookies must not block public browsing. Anonymous reads use
+          // a fresh client without the stale token, while protected APIs stay 401.
+          db = createClient(config.url, config.key, {
+            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+          });
         }
-        user = data.user;
+        user = error ? null : data.user;
         if ((options.auth === "required" || client.token) && !user) {
           throw new ApiError(401, "UNAUTHENTICATED", "Vui lòng đăng nhập.");
         }
       }
-      const result = await handler(request, { db: client.supabase, user, token: client.token });
+      const result = await handler(request, { db, user, token: client.token });
       const { status = 200, ...body } = result;
       response = status === 204 ? new NextResponse(null, { status }) : NextResponse.json(body, { status });
     } catch (error) {

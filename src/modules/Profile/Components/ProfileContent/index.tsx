@@ -5,6 +5,8 @@ import VideoGrid from "@/components/common/VideoGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { VideoData } from "@/types/video.types";
 import { Bookmark, Heart, ListVideo } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
+import RequireAuth from "@/components/auth/RequireAuth";
 
 const sortOptions = [
   { value: "latest", label: "Latest" },
@@ -16,6 +18,8 @@ type SortBy = (typeof sortOptions)[number]["value"];
 
 const ProfileContent = () => {
   const [sortBy, setSortBy] = useState<SortBy>("latest");
+  const [tab, setTab] = useState("video");
+  const { requireAuth, user } = useAuth();
 
   // Dữ liệu demo; sau này thay bằng danh sách trả về từ API.
   const VIDEOS: VideoData[] = [
@@ -65,7 +69,10 @@ const ProfileContent = () => {
 
   return (
     <div className="min-w-0">
-      <Tabs defaultValue="video">
+      <Tabs value={user ? tab : "video"} onValueChange={(value) => {
+        if (value !== "video" && !requireAuth("Đăng nhập để xem video đã lưu và đã thích.")) return;
+        setTab(String(value));
+      }}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-2">
           <TabsList
             variant="line"
@@ -109,10 +116,10 @@ const ProfileContent = () => {
           <VideoGrid videos={sortedVideos} />
         </TabsContent>
         <TabsContent value="saved" className="pt-4">
-          <VideoGrid videos={[]} emptyMessage="Chưa có video đã lưu." />
+          <RequireAuth><VideoGrid videos={[]} emptyMessage="Chưa có video đã lưu." /></RequireAuth>
         </TabsContent>
         <TabsContent value="liked" className="pt-4">
-          <VideoGrid videos={[]} emptyMessage="Chưa có video đã thích." />
+          <RequireAuth><VideoGrid videos={[]} emptyMessage="Chưa có video đã thích." /></RequireAuth>
         </TabsContent>
       </Tabs>
     </div>

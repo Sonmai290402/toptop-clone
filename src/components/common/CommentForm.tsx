@@ -1,14 +1,23 @@
+"use client";
+
 import { MoveUp } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 
 const CommentForm = () => {
+  const { user, openAuth, isLoading } = useAuth();
+  if (!user) return (
+    <Button variant="outline" className="h-auto min-h-10 w-full whitespace-normal py-2" disabled={isLoading} onClick={() => openAuth("sign-in", "Đăng nhập để viết bình luận.")}>
+      {isLoading ? "Đang kiểm tra đăng nhập..." : "Đăng nhập để bình luận"}
+    </Button>
+  );
   return (
     <div className="flex min-w-0 items-center gap-2">
       <Avatar>
-        <AvatarImage src="https://plus.unsplash.com/premium_photo-1764194629423-2a8f29c825e4?q=80&w=685&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D" />
-        <AvatarFallback>User</AvatarFallback>
+        <AvatarImage src={user.avatarUrl ?? undefined} alt={user.displayName} />
+        <AvatarFallback>{user.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
       </Avatar>
       <Textarea
         aria-label="Thêm bình luận"

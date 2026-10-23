@@ -1,8 +1,9 @@
 # Client API và demo Comments
 
 Frontend dùng `@tanstack/react-query` (đã có trong dependencies) và native `fetch`.
-Chỉ tích hợp GET `/api/v1/videos/:videoId/comments`. Feed, profile, auth, like,
-save và gửi/xóa bình luận chưa được tích hợp. CommentForm vẫn là UI hiện có.
+Đã tích hợp GET `/api/v1/videos/:videoId/comments` và luồng auth (xem `docs/AUTH.md`).
+Feed, profile, like, save và gửi/xóa bình luận chưa được tích hợp API.
+CommentForm hiện yêu cầu đăng nhập trước khi hiện ô nhập, chưa gửi bình luận lên server.
 
 ## Các file
 
@@ -40,8 +41,8 @@ Không yêu cầu đăng nhập để đọc comments của video công khai.
 ## Khi tích hợp tiếp
 
 - Truyền ID thật từ video feed thay cho hằng số demo.
-- Khi ghép auth, phân biệt cache theo tài khoản hoặc xóa cache khi đổi phiên;
-  response comments có trường `isOwner` phụ thuộc phiên. Demo chưa dùng trường này.
+- Cache comments đã phân biệt theo ID người xem; AuthProvider xóa cache dữ liệu
+  khi đăng nhập/đăng xuất và đồng bộ thay đổi phiên giữa các tab bằng BroadcastChannel.
 - Thêm mutation gửi/xóa comment và cập nhật cache sau, không gọi API trong render.
 - `apiFetch<T>` mô tả kiểu TypeScript, không phải runtime validation response.
 
