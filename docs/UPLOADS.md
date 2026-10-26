@@ -21,7 +21,7 @@ Typical errors: 401 unauthenticated, 403 invalid Origin or ownership, 400 invali
 
 ## Scope and operations
 
-Uploads are stored in `media_posts`. Profile now reads this collection through the [Posts API](./POSTS-API.md); the mock For You feed and legacy `videos` API remain separate. This page is the upload and preview entry point for both photos and videos. Photo carousels, transcoding, thumbnail generation and adaptive streaming are not implemented.
+Uploads are stored in `media_posts`. Profile, For You and Following read published videos from this collection through the [Posts API](./POSTS-API.md). The legacy `videos` API remains separate. This page is the upload and preview entry point for both photos and videos. Photo carousels, transcoding, thumbnail generation and adaptive streaming are not implemented.
 
 Files in this public bucket are readable by anyone with the URL, including before completion. The application validates declared formats and Storage metadata, not the actual media codec/content. Interrupted uploads can leave unpublished rows or orphaned files. Administrators should periodically review unpublished rows older than two hours, remove associated files through the Storage API/dashboard, then delete those rows. No automatic cleanup or upload quota is configured in this demo.
 

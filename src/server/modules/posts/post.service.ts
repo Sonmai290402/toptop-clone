@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError, databaseError } from "@/server/shared/errors";
 import { postDto } from "../uploads/upload.service";
+import { getProfile } from "../users/user.service";
 
 export const postListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -27,5 +28,7 @@ export async function getPost(db: SupabaseClient, id: string) {
   const { data, error } = await db.from("media_posts").select(columns).eq("id", id).not("published_at", "is", null).maybeSingle();
   if (error) databaseError(error);
   if (!data) throw new ApiError(404, "POST_NOT_FOUND", "Post not found.");
-  return postDto(db, data);
+  const profile = await getProfile(db, data.user_id);
+  const author = { id: profile.id, username: profile.username, displayName: profile.displayName, avatarUrl: profile.avatarUrl };
+  return { ...postDto(db, data), author };
 }

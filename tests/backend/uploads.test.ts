@@ -24,7 +24,8 @@ test("uploads enforce ownership, file metadata and idempotent publishing", async
       create schema auth; create schema storage;
       create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid$$;
       grant usage on schema auth, storage to authenticated, anon;
-      create table public.profiles(id uuid primary key);
+      create table public.profiles(id uuid primary key, username text default 'tester', display_name text default 'Tester', avatar_url text);
+      create table public.follows(follower_id uuid, following_id uuid);
       create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
       create table storage.objects(bucket_id text, name text, metadata jsonb);
       alter table storage.objects enable row level security;
@@ -32,7 +33,8 @@ test("uploads enforce ownership, file metadata and idempotent publishing", async
     `);
     await db.exec(await readFile(new URL("../../supabase/migrations/20261026000100_media_uploads.sql", import.meta.url), "utf8"));
     await db.exec(await readFile(new URL("../../supabase/migrations/20261026000200_public_posts.sql", import.meta.url), "utf8"));
-    await db.query("insert into public.profiles values ($1), ($2)", [alice, bob]);
+    await db.exec(await readFile(new URL("../../supabase/migrations/20261026000400_media_video_feed.sql", import.meta.url), "utf8"));
+    await db.query("insert into public.profiles(id) values ($1), ($2)", [alice, bob]);
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", [alice]);
     await db.exec("set role authenticated");
     await assert.rejects(db.query("insert into public.media_posts(user_id,mime_type,size_bytes) values ($1,'image/png',100)", [bob]), /row-level security/);
@@ -61,5 +63,23 @@ test("uploads enforce ownership, file metadata and idempotent publishing", async
     await db.exec("reset role; set role anon");
     assert.equal((await db.query("select * from public.media_posts")).rows.length, 1, "Anonymous readers cannot see pending uploads");
     await assert.rejects(db.query("insert into public.media_posts(user_id,mime_type,size_bytes) values ($1,'image/png',100)", [alice]), /permission denied/);
+    await db.exec("reset role");
+    await db.query("insert into public.media_posts(user_id,mime_type,size_bytes,published_at) values ($1,'video/mp4',100,now()), ($2,'video/webm',100,now()), ($2,'video/mp4',100,null)", [alice, bob]);
+    await db.query("insert into public.follows values ($1,$2)", [alice, bob]);
+    await db.query("select set_config('request.jwt.claim.sub', '', false)");
+    await db.exec("set role anon");
+    const publicFeed = await db.query<{ data: { id: string; user_id: string; author: { id: string } }[] }>("select public.media_video_feed('for-you', 10, 0) as data");
+    assert.equal(publicFeed.rows[0].data.length, 2, "Feed excludes images and unpublished videos");
+    assert.equal(publicFeed.rows[0].data[0].author.id, publicFeed.rows[0].data[0].user_id);
+    await assert.rejects(db.query("select public.media_video_feed('following', 10, 0)"), /Authentication required/);
+    await db.exec("reset role; set role authenticated");
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [alice]);
+    const following = await db.query<{ data: { user_id: string }[] }>("select public.media_video_feed('following', 10, 0) as data");
+    assert.deepEqual(following.rows[0].data.map(row => row.user_id), [bob]);
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [bob]);
+    assert.deepEqual((await db.query<{ data: unknown[] }>("select public.media_video_feed('following', 10, 0) as data")).rows[0].data, []);
+    const second = await db.query<{ data: { id: string }[] }>("select public.media_video_feed('for-you', 1, 1) as data");
+    assert.equal(second.rows[0].data[0].id, publicFeed.rows[0].data[1].id);
+    await assert.rejects(db.query("select public.media_video_feed('invalid', 10, 0)"), /Invalid feed/);
   } finally { await db.close(); }
 });

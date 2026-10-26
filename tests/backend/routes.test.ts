@@ -22,7 +22,13 @@ import { POST as createUpload } from "../../src/app/api/v1/uploads/route";
 import { POST as completeUpload } from "../../src/app/api/v1/uploads/[uploadId]/complete/route";
 import { GET as myPosts } from "../../src/app/api/v1/me/posts/route";
 import { proxy } from "../../src/proxy";
+import { GET as postState } from "../../src/app/api/v1/posts/[postId]/interactions/route";
+import { GET as postComments, POST as createPostComment } from "../../src/app/api/v1/posts/[postId]/comments/route";
+import { PUT as likePost, DELETE as unlikePost } from "../../src/app/api/v1/posts/[postId]/like/route";
+import { PUT as savePost, DELETE as unsavePost } from "../../src/app/api/v1/posts/[postId]/save/route";
+import { GET as savedPosts } from "../../src/app/api/v1/me/saved-posts/route";
 import { GET as getPosts } from "../../src/app/api/v1/posts/route";
+import { GET as mediaFeed } from "../../src/app/api/v1/posts/feed/route";
 import { GET as getPost } from "../../src/app/api/v1/posts/[postId]/route";
 import { GET as getUserPosts } from "../../src/app/api/v1/users/[userId]/posts/route";
 
@@ -58,6 +64,28 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       return Response.json(invalidToken ? { code: "bad_jwt", message: "Invalid JWT" } : authUser, { status: invalidToken ? 401 : 200 });
     }
     const mediaRow = { id: videoId, user_id: userId, storage_path: `${userId}/${videoId}.mp4`, mime_type: "video/mp4", caption: "Upload test", created_at: "2026-10-26T00:00:00Z" };
+    if (url.pathname === "/rest/v1/rpc/post_interaction_state") return Response.json({ likeCount: 1, commentCount: 1, isLiked: true, isSaved: true, isFollowing: false });
+    if (url.pathname === "/rest/v1/rpc/my_interacted_posts") return Response.json([mediaRow]);
+    if (url.pathname === "/rest/v1/post_comments") {
+      const row = { id: commentId, post_id: videoId, content: body?.content ?? "Real comment", created_at: "2026-10-26T00:00:00Z", author: { id: userId, username: "alice", display_name: "Alice", avatar_url: null } };
+      if (request.method === "POST") {
+        assert.equal(body.author_id, userId);
+        assert.equal(body.post_id, videoId);
+        return Response.json(row, { status: 201 });
+      }
+      assert.equal(url.searchParams.get("post_id"), `eq.${videoId}`);
+      return Response.json([row]);
+    }
+    if (["/rest/v1/post_likes", "/rest/v1/post_saves"].includes(url.pathname)) {
+      if (request.method === "DELETE") {
+        assert.equal(url.searchParams.get("user_id"), `eq.${userId}`);
+        assert.equal(url.searchParams.get("post_id"), `eq.${videoId}`);
+        return new Response(null, { status: 204 });
+      }
+      assert.deepEqual(body, { user_id: userId, post_id: videoId });
+      return url.pathname.endsWith("post_likes") ? Response.json({ code: "23505", message: "Duplicate like" }, { status: 409 }) : new Response(null, { status: 201 });
+    }
+    if (url.pathname === "/rest/v1/rpc/media_video_feed") return Response.json([{ ...mediaRow, author }, { ...mediaRow, id: commentId, author }]);
     if (url.pathname === "/rest/v1/media_posts") {
       if (request.method === "POST") return Response.json(mediaRow);
       assert.equal(url.searchParams.get("published_at"), "not.is.null");
@@ -104,6 +132,40 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   try {
+    await t.test("real post comments and interactions enforce authentication and payload ownership", async () => {
+      const context = { params: Promise.resolve({ postId: videoId }) };
+      const guest = (suffix: string, method = "GET", body?: object) => new NextRequest(`http://localhost:3000/api/v1/posts/${videoId}/${suffix}`, { method, headers: { origin: "http://localhost:3000", "content-type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}) });
+      assert.equal((await postState(guest("interactions"), context)).status, 200);
+      const comments = await postComments(guest("comments"), context);
+      assert.equal(comments.status, 200);
+      assert.equal((await comments.json()).data[0].postId, videoId);
+      assert.equal((await createPostComment(guest("comments", "POST", { content: "Guest" }), context)).status, 401);
+      assert.equal((await likePost(guest("like", "PUT"), context)).status, 401);
+      assert.equal((await savePost(guest("save", "PUT"), context)).status, 401);
+      assert.equal((await savedPosts(new NextRequest("http://localhost:3000/api/v1/me/saved-posts"))).status, 401);
+      assert.equal((await createPostComment(request(`posts/${videoId}/comments`, "POST", { content: "   " }), context)).status, 400);
+      assert.equal((await createPostComment(request(`posts/${videoId}/comments`, "POST", { content: "hello", authorId: videoId }), context)).status, 400);
+      const created = await createPostComment(request(`posts/${videoId}/comments`, "POST", { content: "  Hello post  " }), context);
+      assert.equal(created.status, 201);
+      assert.equal((await created.json()).data.content, "Hello post");
+      assert.equal((await likePost(request(`posts/${videoId}/like`, "PUT"), context)).status, 200, "Duplicate likes are idempotent");
+      assert.equal((await unlikePost(request(`posts/${videoId}/like`, "DELETE"), context)).status, 200);
+      assert.equal((await savePost(request(`posts/${videoId}/save`, "PUT"), context)).status, 200);
+      assert.equal((await unsavePost(request(`posts/${videoId}/save`, "DELETE"), context)).status, 200);
+      assert.equal((await savedPosts(request("me/saved-posts"))).status, 200);
+    });
+    await t.test("media feed is public for For You and authenticated for Following", async () => {
+      const response = await mediaFeed(new NextRequest("http://localhost:3000/api/v1/posts/feed?limit=1"));
+      assert.equal(response.status, 200);
+      const page = await response.json();
+      assert.equal(page.data[0].author.username, "alice");
+      assert.equal(page.data.length, 1);
+      assert.equal(page.pagination.nextOffset, 1);
+      assert.equal((await mediaFeed(new NextRequest("http://localhost:3000/api/v1/posts/feed?feed=following"))).status, 401);
+      assert.equal((await mediaFeed(request("posts/feed?feed=following"))).status, 200);
+      assert.equal(requests.at(-1)?.body?.p_feed, "following");
+      assert.equal((await mediaFeed(request("posts/feed?limit=100"))).status, 400);
+    });
     await t.test("published post reads filter authors, paginate, validate and return details", async () => {
       const response = await getPosts(new NextRequest("http://localhost:3000/api/v1/posts?limit=1"));
       assert.equal(response.status, 200);

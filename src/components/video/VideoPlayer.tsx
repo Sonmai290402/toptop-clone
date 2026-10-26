@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
+import type { FeedVideo } from "@/hooks/queries/useVideoFeed";
 import VideoActions from "../common/VideoActions";
 import Comments from "../common/Comments";
-import { DEMO_COMMENTS_VIDEO_ID } from "@/lib/demo";
 
 type VideoPlayerProps = {
   src: string;
+  postId: string;
+  author: FeedVideo["author"];
   title: string;
   isActive: boolean;
   volume: number;
@@ -21,6 +24,8 @@ type VideoPlayerProps = {
 
 export default function VideoPlayer({
   src,
+  postId,
+  author,
   title,
   isActive,
   volume,
@@ -109,7 +114,7 @@ export default function VideoPlayer({
             />
             <div className="absolute bottom-0 left-0 w-full group-hover/video:bg-black/50 p-3 text-white transition-[bottom] duration-400 group-hover/video:bottom-[66px]">
               <div className="flex min-w-0 items-center">
-                <p className="truncate font-semibold">{info.username}</p>
+                <Link href={`/@${encodeURIComponent(info.username)}`} className="truncate font-semibold hover:underline">{info.username}</Link>
                 {info.time && (
                   <p className="ml-2 shrink-0 text-sm text-muted-foreground">
                     {info.time}
@@ -123,10 +128,10 @@ export default function VideoPlayer({
           </div>
         </div>
 
-        <VideoActions />
+        <VideoActions key={postId} postId={postId} author={author} isActive={isActive} />
       </div>
 
-      <Comments videoId={DEMO_COMMENTS_VIDEO_ID} />
+      <Comments key={postId} postId={postId} isActive={isActive} />
     </div>
   );
 }

@@ -1,5 +1,8 @@
 # Backend API — Toptop
 
+Real media post comments, likes, saves, private collections and follow UI integration:
+[Post interactions](./POST-INTERACTIONS.md).
+
 Published media post lists, details and user-specific lists are documented in
 [Posts API](./POSTS-API.md). Profile now displays the viewed user's real media posts.
 
@@ -13,7 +16,7 @@ See [User profile API](./USER-API.md) for the response contract, username/curren
 endpoints, client helpers and reusable TanStack Query hooks.
 
 Backend cơ bản sử dụng **Next.js Route Handlers + Supabase PostgreSQL/Auth/Storage + Zod**.
-The frontend uses TanStack Query for auth, comments and published Profile posts. The For You feed still uses mock data.
+The frontend uses TanStack Query for auth, comments and published posts. For You and Following use `/api/v1/posts/feed`; Profile uses user-specific post lists. See [Posts API](./POSTS-API.md) for media feed contracts. The legacy `/videos` endpoints below still operate on the separate videos table.
 Xem `docs/AUTH.md` cho luồng UI, cấu hình email và role.
 
 ## 1. Phạm vi đã triển khai
@@ -33,7 +36,7 @@ Xem `docs/AUTH.md` cho luồng UI, cấu hình email và role.
 **Not implemented:** editing/deleting published media, view tracking, pin management,
 username/email changes, comment likes/replies, search, notifications, realtime,
 video processing and an admin UI. The new upload page stores posts in `media_posts`;
-the For You feed is not connected to this collection yet; Profile uses published media posts.
+For You, Following and Profile read published media posts.
 
 ## 2. Cấu hình Supabase từ đầu
 

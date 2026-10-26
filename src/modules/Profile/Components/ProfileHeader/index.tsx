@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { ProfileDto } from "@/types/api.types";
 import { Forward, Settings } from "lucide-react";
+import { useIsMutating } from "@tanstack/react-query";
+import { useFollowUser } from "@/hooks/queries/usePostInteractions";
 
 type ProfileHeaderProps = {
   userData: ProfileDto;
@@ -13,6 +15,8 @@ type ProfileHeaderProps = {
 const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
   const { requireAuth, user, isLoading } = useAuth();
   const isOwner = user?.id === userData.id;
+  const follow = useFollowUser(userData.id);
+  const followingBusy = useIsMutating({ mutationKey: ["follow-user", userData.id] }) > 0;
   return (
     <section className="flex gap-6 items-center">
       <Avatar className="w-40 h-40">
@@ -45,17 +49,15 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
         </div>
         <div className="flex gap-4">
           <Button
-            disabled={isLoading}
-            onClick={() =>
-              requireAuth(
-                isOwner
-                  ? "Sign in to edit your profile."
-                  : "Sign in to follow this user.",
-              )
-            }
+            disabled={isLoading || followingBusy}
+            aria-pressed={isOwner ? undefined : userData.isFollowing}
+            onClick={() => {
+              if (!requireAuth(isOwner ? "Sign in to edit your profile." : "Sign in to follow this user.")) return;
+              if (!isOwner && !followingBusy) follow.mutate(!userData.isFollowing);
+            }}
             className="h-10"
           >
-            {isOwner ? "Edit Profile" : "Follow"}
+            {isOwner ? "Edit Profile" : followingBusy ? "Updating..." : userData.isFollowing ? "Unfollow" : "Follow"}
           </Button>
           {isOwner && (
             <Button
@@ -71,6 +73,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
             <Forward className="w-5! h-5!" />
           </Button>
         </div>
+        {follow.error && <p role="alert" className="text-sm text-red-400">{follow.error.message}</p>}
         <p>{userData.bio}</p>
       </div>
     </section>

@@ -1,5 +1,15 @@
 # Media post reads and profile grid
 
+## For You and Following
+
+Apply `20261026000400_media_video_feed.sql` before using the real feeds.
+`GET /api/v1/posts/feed?feed=for-you&limit=10&offset=0` returns published videos from all creators, newest first. For You currently uses chronological ordering, not personalized recommendations.
+Use `feed=following` for published videos by accounts the current user follows. Following requires a valid session (401 otherwise); its database function also enforces authentication. Images and pending uploads are excluded before pagination. `limit` is 1–50, `offset` is 0–100000.
+
+The response uses `{ data: [...], pagination: { hasMore, nextOffset } }`. Each post includes `author: { id, username, displayName, avatarUrl }`. `GET /api/v1/posts/:postId` also includes this author information.
+
+Both feed pages use real uploaded videos, author profiles, captions and dates, auto-play the visible video and load more on scroll. Shared volume and the existing player layout are preserved. Comments, likes, saves and follows now use real post/user relationships; see [Post interactions](./POST-INTERACTIONS.md). The legacy `/videos` API remains separate.
+
 Apply `supabase/migrations/20261026000200_public_posts.sql` after the upload migration, using `npx supabase db push` for a linked project or the SQL Editor. This adds read access for published posts and indexes; existing posts are preserved. Unpublished uploads remain visible only to their owner at the database level and are excluded from every endpoint below, including `/me/posts`.
 
 | Method | Endpoint | Purpose | Authentication |
@@ -31,4 +41,4 @@ The detail endpoint returns `{ "data": { ...post } }`. Lists use creation time p
 
 List endpoints also accept optional `mediaType=video` or `mediaType=image`; filtering happens before pagination.
 
-Profile resolves the route username to a profile UUID, then loads that profile's videos with `mediaType=video` through TanStack Query. It reuses the original VideoGrid/VideoCard layout with muted hover previews and click-to-play, without native controls or visible captions. Latest/oldest ordering and load-more remain available. Saved/Liked tabs, Popular sorting, pin badges and view counts are commented out until their data is available. Upload completion invalidates post queries. Profile pages still require login; published post read APIs are public.
+Profile resolves the route username to a profile UUID, then loads that profile's videos with `mediaType=video` through TanStack Query. It reuses the original VideoGrid/VideoCard layout with muted hover previews and click-to-play, without native controls or visible captions. Latest/oldest ordering and load-more remain available. Saved/Liked tabs now load private video collections on the current user's own Profile. Popular sorting, pin badges and view counts remain commented out. Upload completion invalidates post queries. Profile pages still require login; published post read APIs are public.
