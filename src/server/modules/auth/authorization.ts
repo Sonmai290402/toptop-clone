@@ -39,7 +39,7 @@ export async function getAuthUser(db: SupabaseClient, user: User, syncGoogleProf
     || user.identities?.some(item => item.provider === "google");
 
   if (syncGoogleProfile && hasGoogleIdentity) {
-    // Fill generated defaults only; retain usernames and customized profile data.
+    // Fill generated defaults only; preserve customized profile data.
     const updates: { display_name?: string; avatar_url?: string } = {};
     if (profile.username.startsWith("user_") && profile.display_name === profile.username && identity.displayName !== "User") {
       updates.display_name = identity.displayName;
@@ -50,6 +50,12 @@ export async function getAuthUser(db: SupabaseClient, user: User, syncGoogleProf
       if (update.error) databaseError(update.error);
       Object.assign(profile, updates);
     }
+    const username = await db.rpc("sync_google_username");
+    if (username.error?.code === "PGRST202") {
+      throw new ApiError(503, "GOOGLE_PROFILE_SETUP_REQUIRED", "Google authentication succeeded, but username setup is unavailable. Apply the Google usernames database migration and sign in again.");
+    }
+    if (username.error) databaseError(username.error);
+    profile.username = z.string().parse(username.data);
   }
 
   return { ...identity, username: profile.username, displayName: profile.display_name, avatarUrl: profile.avatar_url };

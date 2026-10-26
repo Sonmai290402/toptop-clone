@@ -4,14 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { Pause, Play, VideoOff } from "lucide-react";
 import type { VideoData } from "@/types/video.types";
 
-type VideoCardProps = {
-  video: VideoData;
-};
+export type VideoPreviewData = Omit<VideoData, "isPinned" | "viewCount"> & Partial<Pick<VideoData, "isPinned" | "viewCount">>;
+type VideoCardProps = { video: VideoPreviewData };
 
-const countFormatter = new Intl.NumberFormat("en", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
+// const countFormatter = new Intl.NumberFormat("en", {
+//   notation: "compact",
+//   maximumFractionDigits: 1,
+// });
 
 export default function VideoCard({ video }: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -27,7 +26,7 @@ export default function VideoCard({ video }: VideoCardProps) {
     const player = videoRef.current;
     if (player && !hasError) {
       void player.play().catch(() => {
-        // Có thể bị hủy khi con trỏ rời card trước lúc video kịp phát.
+        // Playback may be canceled when the pointer leaves the card.
       });
     }
   }
@@ -42,7 +41,7 @@ export default function VideoCard({ video }: VideoCardProps) {
   return (
     <button
       type="button"
-      aria-label={`Xem trước video: ${video.description}`}
+      aria-label={`Preview video: ${video.description}`}
       aria-pressed={isPlaying}
       disabled={hasError}
       onClick={() => {
@@ -76,15 +75,17 @@ export default function VideoCard({ video }: VideoCardProps) {
       {hasError && (
         <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted p-3 text-center text-sm text-muted-foreground">
           <VideoOff className="size-6" aria-hidden="true" />
-          Không thể tải video
+          Unable to load video
         </span>
       )}
 
+      {/* Pin metadata is not available for media posts yet.
       {video.isPinned && (
         <span className="absolute left-2 top-2 rounded bg-destructive px-2 py-0.5 text-xs font-semibold text-white">
-          Đã ghim
+          Pinned
         </span>
       )}
+      */}
 
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
         <span className="rounded-full bg-black/45 p-3">
@@ -96,12 +97,14 @@ export default function VideoCard({ video }: VideoCardProps) {
         </span>
       </span>
 
+      {/* View counts are not available for media posts yet.
       <span className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-sm font-semibold">
         <Play className="size-4 shrink-0" aria-hidden="true" />
-        <span aria-label={`${video.viewCount} lượt xem`}>
+        <span aria-label={`${video.viewCount} views`}>
           {countFormatter.format(video.viewCount)}
         </span>
       </span>
+      */}
     </button>
   );
 }

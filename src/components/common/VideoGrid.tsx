@@ -1,8 +1,7 @@
-import type { VideoData } from "@/types/video.types";
-import VideoCard from "./VideoCard";
+import VideoCard, { type VideoPreviewData } from "./VideoCard";
 
 type VideoGridProps = {
-  videos: VideoData[];
+  videos: VideoPreviewData[];
   emptyMessage?: string;
 };
 

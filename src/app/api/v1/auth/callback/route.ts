@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
   const recovery = request.nextUrl.searchParams.get("flow") === "recovery"
     || request.nextUrl.searchParams.get("type") === "recovery";
   const failure = !response.ok && google ? await response.clone().json() : null;
-  const reason = failure?.error?.code === "OAUTH_CANCELLED" ? "cancelled" : "failed";
+  const reason = failure?.error?.code === "OAUTH_CANCELLED" ? "cancelled"
+    : failure?.error?.code === "GOOGLE_PROFILE_SETUP_REQUIRED" ? "profile-setup" : "failed";
   const path = response.ok
     ? recovery ? "/auth/reset-password" : google ? "/auth/signed-in" : "/auth/confirmed"
     : google ? `/auth/oauth-error?reason=${reason}` : "/auth/confirmed?error=1";

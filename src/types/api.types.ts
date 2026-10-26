@@ -1,4 +1,4 @@
-export type { CommentDto } from "@/server/modules/contracts";
+export type { CommentDto, ProfileDto } from "@/server/modules/contracts";
 
 export type ApiResponse<T> = { data: T };
 

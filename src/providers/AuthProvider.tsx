@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSession, signOut } from "@/lib/api/auth.api";
 import type { AuthUser } from "@/types/auth.types";
 import AuthDialog from "@/components/auth/AuthDialog";
+import { useRouter } from "next/navigation";
 
 const sessionKey = ["auth", "session"] as const;
 export type AuthMode = "sign-in" | "sign-up" | "forgot-password";
@@ -30,6 +31,7 @@ export function useAuth() {
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient();
+  const router = useRouter();
   const channel = useRef<BroadcastChannel | null>(null);
   const [dialog, setDialog] = useState<{ mode: AuthMode; reason?: string } | null>(null);
   const session = useQuery({
@@ -46,22 +48,26 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     if (!("BroadcastChannel" in window)) return;
     const connection = new BroadcastChannel("toptop-auth");
     channel.current = connection;
-    connection.onmessage = () => {
+    connection.onmessage = (event) => {
       void client.cancelQueries().then(() => {
         client.removeQueries({ predicate: (query) => query.queryKey[0] !== "auth" });
-        // Hide the previous identity until this tab revalidates the cookies.
-        client.setQueryData(sessionKey, { data: { user: null } });
+        // Immediately clear signed-out sessions across open tabs.
+        if (event.data === "signed-out") {
+          client.setQueryData(sessionKey, { data: { user: null } });
+          router.replace("/");
+          router.refresh();
+        }
         void client.invalidateQueries({ queryKey: sessionKey });
       });
     };
     return () => { channel.current = null; connection.close(); };
-  }, [client]);
+  }, [client, router]);
 
   const replaceSession = useCallback(async (nextUser: AuthUser | null) => {
     await client.cancelQueries();
     client.removeQueries({ predicate: (query) => query.queryKey[0] !== "auth" });
     client.setQueryData(sessionKey, { data: { user: nextUser } });
-    channel.current?.postMessage("session-changed");
+    channel.current?.postMessage(nextUser ? "session-changed" : "signed-out");
   }, [client]);
 
   const completeSignIn = useCallback(async (nextUser: AuthUser) => {
@@ -71,7 +77,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useMutation({
     mutationFn: signOut,
-    onSuccess: () => replaceSession(null),
+    onSuccess: async () => {
+      await replaceSession(null);
+      setDialog(null);
+      router.replace("/");
+      router.refresh();
+    },
   });
 
   const openAuth = (mode: AuthMode = "sign-in", reason?: string) => setDialog({ mode, reason });

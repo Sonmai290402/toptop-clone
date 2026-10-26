@@ -1,7 +1,19 @@
 # Backend API — Toptop
 
+Published media post lists, details and user-specific lists are documented in
+[Posts API](./POSTS-API.md). Profile now displays the viewed user's real media posts.
+
+Media uploads are available through `POST /api/v1/uploads`,
+`POST /api/v1/uploads/:uploadId/complete` and `GET /api/v1/me/posts`.
+See [Upload setup and API](./UPLOADS.md) for the required migration, request examples,
+limits, Storage behavior and authenticated page access.
+
+User profile lookup by UUID is available at `GET /api/v1/users/:userId`.
+See [User profile API](./USER-API.md) for the response contract, username/current-user
+endpoints, client helpers and reusable TanStack Query hooks.
+
 Backend cơ bản sử dụng **Next.js Route Handlers + Supabase PostgreSQL/Auth/Storage + Zod**.
-Frontend đã tích hợp auth và đọc bình luận bằng TanStack Query. Video feed/profile vẫn dùng mock data.
+The frontend uses TanStack Query for auth, comments and published Profile posts. The For You feed still uses mock data.
 Xem `docs/AUTH.md` cho luồng UI, cấu hình email và role.
 
 ## 1. Phạm vi đã triển khai
@@ -18,9 +30,10 @@ Xem `docs/AUTH.md` cho luồng UI, cấu hình email và role.
 - Migration và script seed 2 tài khoản, 4 video demo, 1 bình luận.
 - Chuẩn bị bucket `videos`, `thumbnails`, `avatars` trong Storage.
 
-**Chưa triển khai:** upload/đăng/sửa/xóa video, tăng lượt xem, thay đổi ghim, đổi username/email,
-thích/trả lời bình luận, tìm kiếm, notification, realtime, xử lý/nén video, màn hình quản trị.
-Storage chưa mở quyền upload cho user. Chuẩn bị bucket không đồng nghĩa đã có API upload.
+**Not implemented:** editing/deleting published media, view tracking, pin management,
+username/email changes, comment likes/replies, search, notifications, realtime,
+video processing and an admin UI. The new upload page stores posts in `media_posts`;
+the For You feed is not connected to this collection yet; Profile uses published media posts.
 
 ## 2. Cấu hình Supabase từ đầu
 

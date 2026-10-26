@@ -10,7 +10,7 @@ const origin = "http://localhost:3000";
 const userId = "00000000-0000-4000-8000-000000000003";
 const username = `user_${userId.replaceAll("-", "").slice(0, 24)}`;
 const user = {
-  id: userId, email: "google@example.com", aud: "authenticated", created_at: "2026-10-23T00:00:00Z",
+  id: userId, email: "google.tester@gmail.com", aud: "authenticated", created_at: "2026-10-23T00:00:00Z",
   app_metadata: { provider: "google", app_role: "user" },
   user_metadata: { full_name: "Google Tester", avatar_url: "https://lh3.googleusercontent.com/test-avatar", role: "admin" },
 };
@@ -27,6 +27,7 @@ test("Google OAuth PKCE, callbacks and profile synchronization", async (t) => {
   let tokenCalls = 0;
   let updates = 0;
   let profileUnavailable = false;
+  let usernameMigrationMissing = false;
   const fetchMock = t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
     const request = new Request(input, init);
     const url = new URL(request.url);
@@ -44,6 +45,11 @@ test("Google OAuth PKCE, callbacks and profile synchronization", async (t) => {
       return Response.json({ access_token: token, refresh_token: "refresh-test-only", token_type: "bearer", expires_in: 3600, expires_at: expiresAt, user });
     }
     if (url.pathname === "/auth/v1/user") return Response.json(user);
+    if (url.pathname === "/rest/v1/rpc/sync_google_username") {
+      if (usernameMigrationMissing) return Response.json({ code: "PGRST202", message: "Function not found" }, { status: 404 });
+      if (profile.username === username) profile.username = "google_tester";
+      return Response.json(profile.username);
+    }
     if (url.pathname === "/rest/v1/profiles") {
       if (profileUnavailable) return Response.json(null);
       if (request.method === "PATCH") {
@@ -102,21 +108,32 @@ test("Google OAuth PKCE, callbacks and profile synchronization", async (t) => {
       assert.equal(updates, 1);
       const restored = await session(new NextRequest(`${origin}/api/v1/auth/session`, { headers: { cookie: cookies(response) } }));
       const identity = (await restored.json()).data.user;
-      assert.equal(identity.username, username);
+      assert.equal(identity.username, "google_tester");
       assert.equal(identity.displayName, "Google Tester");
       assert.equal(identity.avatarUrl, user.user_metadata.avatar_url);
       assert.equal(identity.role, "user");
     });
     await t.test("repeat sign-in preserves edited profiles and JSON omits refresh token", async () => {
-      profile = { username, display_name: "My edited name", avatar_url: "https://example.com/custom.png" };
+      profile = { username: "custom_username", display_name: "My edited name", avatar_url: "https://example.com/custom.png" };
       const response = await finish("flow=google&code=valid-code", await start(), "application/json");
       assert.equal(response.status, 200);
       const body = await response.json();
       assert.equal(body.data.user.displayName, "My edited name");
+      assert.equal(body.data.user.username, "custom_username");
       assert.equal(body.data.user.avatarUrl, profile.avatar_url);
       assert.equal(updates, 1);
       assert.ok(body.data.session.accessToken);
       assert.equal(body.data.session.refreshToken, undefined);
+    });
+    await t.test("missing username migration reports profile setup instead of an OAuth failure", async () => {
+      usernameMigrationMissing = true;
+      try {
+        const response = await finish("flow=google&code=valid-code", await start());
+        assert.equal(response.headers.get("location"), `${origin}/auth/oauth-error?reason=profile-setup`);
+        const json = await finish("flow=google&code=valid-code", await start(), "application/json");
+        assert.equal(json.status, 503);
+        assert.equal((await json.json()).error.code, "GOOGLE_PROFILE_SETUP_REQUIRED");
+      } finally { usernameMigrationMissing = false; }
     });
     await t.test("cancel does not exchange a code and clears the flow cookie", async () => {
       const cookie = await start();

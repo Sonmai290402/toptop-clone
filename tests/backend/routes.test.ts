@@ -15,6 +15,16 @@ import { GET as callback } from "../../src/app/api/v1/auth/callback/route";
 import { GET as getComments } from "../../src/app/api/v1/videos/[videoId]/comments/route";
 import { PUT as saveVideo } from "../../src/app/api/v1/videos/[videoId]/save/route";
 import { PUT as follow } from "../../src/app/api/v1/users/[userId]/follow/route";
+import { GET as userById } from "../../src/app/api/v1/users/[userId]/route";
+import { GET as userByUsername } from "../../src/app/api/v1/users/by-username/[username]/route";
+import { GET as myProfile } from "../../src/app/api/v1/me/route";
+import { POST as createUpload } from "../../src/app/api/v1/uploads/route";
+import { POST as completeUpload } from "../../src/app/api/v1/uploads/[uploadId]/complete/route";
+import { GET as myPosts } from "../../src/app/api/v1/me/posts/route";
+import { proxy } from "../../src/proxy";
+import { GET as getPosts } from "../../src/app/api/v1/posts/route";
+import { GET as getPost } from "../../src/app/api/v1/posts/[postId]/route";
+import { GET as getUserPosts } from "../../src/app/api/v1/users/[userId]/posts/route";
 
 const userId = "00000000-0000-4000-8000-000000000001";
 const videoId = "10000000-0000-4000-8000-000000000001";
@@ -36,6 +46,8 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
   let invalidToken = false;
   let owner = userId;
   let sessionCookie = "";
+  let missingProfile = false;
+  let missingPost = false;
   const fetchMock = t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
     const request = new Request(input, init);
     const url = new URL(request.url);
@@ -45,8 +57,29 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     if (url.pathname === "/auth/v1/user") {
       return Response.json(invalidToken ? { code: "bad_jwt", message: "Invalid JWT" } : authUser, { status: invalidToken ? 401 : 200 });
     }
+    const mediaRow = { id: videoId, user_id: userId, storage_path: `${userId}/${videoId}.mp4`, mime_type: "video/mp4", caption: "Upload test", created_at: "2026-10-26T00:00:00Z" };
+    if (url.pathname === "/rest/v1/media_posts") {
+      if (request.method === "POST") return Response.json(mediaRow);
+      assert.equal(url.searchParams.get("published_at"), "not.is.null");
+      if (url.searchParams.has("id")) return Response.json(missingPost ? null : mediaRow);
+      assert.ok(url.searchParams.get("order")?.includes("id."));
+      const filter = url.searchParams.get("user_id");
+      if (filter && filter !== `eq.${userId}`) return Response.json([]);
+      const mediaFilter = url.searchParams.get("mime_type");
+      const rows = [mediaRow, { ...mediaRow, id: commentId, mime_type: "image/png" }].filter(row => !mediaFilter || mediaFilter === `like.${row.mime_type.split("/")[0]}/%`);
+      const offset = Number(url.searchParams.get("offset") ?? 0);
+      return Response.json(rows.slice(offset, offset + Number(url.searchParams.get("limit") ?? 20)));
+    }
+    if (url.pathname.startsWith("/storage/v1/object/upload/sign/posts/")) return Response.json({ url: `/object/upload/sign/posts/${mediaRow.storage_path}?token=test-signed-token` });
+    if (url.pathname === "/rest/v1/rpc/publish_media_post") return Response.json(mediaRow);
     if (["/auth/v1/logout", "/auth/v1/recover", "/auth/v1/resend"].includes(url.pathname)) return Response.json({});
-    if (url.pathname === "/rest/v1/profiles") return Response.json({ username: "alice", display_name: "Alice", avatar_url: null });
+    if (url.pathname === "/rest/v1/profiles") return Response.json(missingProfile ? null : { id: userId, username: "alice", display_name: "Alice", avatar_url: null });
+    if (url.pathname === "/rest/v1/rpc/api_profile") return Response.json(missingProfile ? null : {
+      ...author, bio: "Hello", createdAt: "2026-10-23T00:00:00Z",
+      followerCount: 12, followingCount: 5, likeCount: 40,
+      isFollowing: request.headers.get("authorization") === "Bearer valid-test-token",
+      email: "private@example.com", role: "admin",
+    });
     if (url.pathname === "/auth/v1/token") {
       const expiresAt = Math.floor(Date.now() / 1000) + 3600;
       const token = [Buffer.from('{"alg":"HS256"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: userId, exp: expiresAt })).toString("base64url"), "testsignature"].join(".");
@@ -71,6 +104,89 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   try {
+    await t.test("published post reads filter authors, paginate, validate and return details", async () => {
+      const response = await getPosts(new NextRequest("http://localhost:3000/api/v1/posts?limit=1"));
+      assert.equal(response.status, 200);
+      const page = await response.json();
+      assert.equal(page.data.length, 1);
+      assert.equal(page.data[0].userId, userId);
+      assert.deepEqual(page.pagination, { hasMore: true, nextOffset: 1 });
+      const next = await getPosts(new NextRequest("http://localhost:3000/api/v1/posts?limit=1&offset=1"));
+      assert.equal((await next.json()).data[0].mediaType, "image");
+      const own = await getUserPosts(request(`users/${userId}/posts`), { params: Promise.resolve({ userId }) });
+      assert.equal((await own.json()).data.length, 2);
+      const videosOnly = await getUserPosts(request(`users/${userId}/posts?mediaType=video&limit=1`), { params: Promise.resolve({ userId }) });
+      const videoPage = await videosOnly.json();
+      assert.equal(videoPage.data.length, 1);
+      assert.equal(videoPage.data[0].mediaType, "video");
+      assert.equal(videoPage.pagination.hasMore, false);
+      const other = await getUserPosts(request(`users/${videoId}/posts`), { params: Promise.resolve({ userId: videoId }) });
+      assert.deepEqual((await other.json()).data, []);
+      assert.equal((await getPosts(request("posts?limit=51"))).status, 400);
+      assert.equal((await getPosts(request("posts?sort=popular"))).status, 400);
+      assert.equal((await myPosts(request(`me/posts?userId=${videoId}`))).status, 400);
+      const detail = await getPost(request(`posts/${videoId}`), { params: Promise.resolve({ postId: videoId }) });
+      assert.equal((await detail.json()).data.id, videoId);
+      missingPost = true;
+      assert.equal((await getPost(request(`posts/${videoId}`), { params: Promise.resolve({ postId: videoId }) })).status, 404);
+      missingPost = false;
+    });
+    await t.test("upload routes require auth and return signed upload and published DTOs", async () => {
+      const guest = new NextRequest("http://localhost:3000/api/v1/uploads", { method: "POST", headers: { origin: "http://localhost:3000", "content-type": "application/json" }, body: JSON.stringify({ mimeType: "video/mp4", size: 100 }) });
+      assert.equal((await createUpload(guest)).status, 401);
+      assert.equal((await myPosts(new NextRequest("http://localhost:3000/api/v1/me/posts"))).status, 401);
+      assert.equal((await createUpload(request("uploads", "POST", { mimeType: "image/svg+xml", size: 100 }))).status, 400);
+      const ticket = await createUpload(request("uploads", "POST", { mimeType: "video/mp4", size: 100 }));
+      assert.equal(ticket.status, 201);
+      assert.match((await ticket.json()).data.signedUrl, /token=test-signed-token/);
+      const complete = await completeUpload(request(`uploads/${videoId}/complete`, "POST", { caption: "Upload test" }), { params: Promise.resolve({ uploadId: videoId }) });
+      assert.equal(complete.status, 200);
+      const post = (await complete.json()).data;
+      assert.equal(post.mediaType, "video");
+      assert.match(post.mediaUrl, /\/storage\/v1\/object\/public\/posts\//);
+      assert.equal(post.storage_path, undefined);
+      assert.equal((await myPosts(request("me/posts"))).status, 200);
+    });
+    await t.test("guest page requests redirect home without blocking public browsing", async () => {
+      for (const path of ["/upload", "/following", "/@alice"]) {
+        const response = await proxy(new NextRequest(`http://localhost:3000${path}`));
+        assert.equal(response.status, 307);
+        assert.equal(response.headers.get("location"), "http://localhost:3000/");
+      }
+      assert.equal((await proxy(new NextRequest("http://localhost:3000/"))).status, 200);
+    });
+    await t.test("public profile excludes private fields and follows viewer identity", async () => {
+      const response = await userById(new NextRequest(`http://localhost:3000/api/v1/users/${userId}`), { params: Promise.resolve({ userId }) });
+      assert.equal(response.status, 200);
+      const { data } = await response.json();
+      assert.equal(data.id, userId);
+      assert.equal(data.isFollowing, false);
+      assert.equal(data.followerCount, 12);
+      assert.equal(data.email, undefined);
+      assert.equal(data.role, undefined);
+      assert.equal(response.headers.get("cache-control"), "private, no-store");
+      const authenticated = await userById(request(`users/${userId}`), { params: Promise.resolve({ userId }) });
+      assert.equal((await authenticated.json()).data.isFollowing, true);
+      const byName = await userByUsername(request("users/by-username/@ALICE"), { params: Promise.resolve({ username: "@ALICE" }) });
+      assert.equal(byName.status, 200);
+      assert.equal((await byName.json()).data.username, "alice");
+      assert.equal((await myProfile(new NextRequest("http://localhost:3000/api/v1/me"))).status, 401);
+      assert.equal((await myProfile(request("me"))).status, 200);
+    });
+    await t.test("profile validates IDs before querying and returns 404 for missing users", async () => {
+      const start = requests.length;
+      const invalid = await userById(new NextRequest("http://localhost:3000/api/v1/users/invalid"), { params: Promise.resolve({ userId: "invalid" }) });
+      assert.equal(invalid.status, 400);
+      assert.equal(requests.length, start);
+      missingProfile = true;
+      try {
+        const missing = await userById(request(`users/${userId}`), { params: Promise.resolve({ userId }) });
+        assert.equal(missing.status, 404);
+        assert.equal((await missing.json()).error.code, "USER_NOT_FOUND");
+        const byName = await userByUsername(request("users/by-username/missing"), { params: Promise.resolve({ username: "missing" }) });
+        assert.equal(byName.status, 404);
+      } finally { missingProfile = false; }
+    });
     await t.test("GET feed passes filters to RPC and returns DTO without cursor internals", async () => {
       const response = await feed(request("videos?feed=following&limit=2"));
       assert.equal(response.status, 200);

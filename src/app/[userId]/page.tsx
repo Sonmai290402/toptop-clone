@@ -2,11 +2,12 @@
 
 import Profile from "@/modules/Profile";
 import { Suspense } from "react";
+import ProtectedPage from "@/components/auth/ProtectedPage";
 
 const ProfilePage = () => {
   return (
     <Suspense fallback={null}>
-      <Profile />
+      <ProtectedPage><Profile /></ProtectedPage>
     </Suspense>
   );
 };

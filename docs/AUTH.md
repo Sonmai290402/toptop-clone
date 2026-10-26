@@ -1,5 +1,13 @@
 # Auth frontend và role
 
+## Google usernames
+
+Apply `20261026000300_google_usernames.sql` with `npx supabase db push` (linked project), or run that migration once in the Supabase SQL Editor before using the updated OAuth callback.
+
+After Google authentication, the server calls `sync_google_username()`. It derives the username from the trusted account email's local part: `tuananh@gmail.com` becomes `tuananh`. Letters are lowercased and characters outside `[a-z0-9_]` become underscores, so `first.last@gmail.com` becomes `first_last`. Names are limited to 30 characters and padded with underscores if shorter than three. Collisions add `_1`, `_2`, etc., under the database unique constraint; after 100 occupied suffixes the existing unique generated name is retained.
+
+Existing Google accounts with the exact generated `user_<UUID prefix>` username are updated on their next Google login. Custom usernames remain unchanged, as do profile IDs and related data. Email/password accounts are not renamed. The RPC accepts no email or user ID from callers, and does not grant clients general username-edit permissions. Google accounts with non-Gmail email addresses use the same local-part rule.
+
 ## Phạm vi
 
 - Đăng nhập/đăng ký email và mật khẩu bằng dialog, không rời video đang xem.

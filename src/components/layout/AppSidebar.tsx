@@ -20,6 +20,7 @@ import {
   Home,
   Search,
   UserCheck,
+  UploadCloud,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -35,6 +36,7 @@ const AppSideBar = () => {
   const { state } = useSidebar();
   const { requireAuth, isLoading } = useAuth();
   const MENU_ITEMS = [
+    { label: "Upload", href: "/upload", icon: <UploadCloud className="w-5! h-5!" /> },
     { label: t("for-you"), href: "/", icon: <Home className="w-5! h-5!" /> },
     {
       label: t("explore"),
@@ -80,9 +82,9 @@ const AppSideBar = () => {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 render={<Link href={item.href} />}
-                aria-disabled={item.href === "/following" && isLoading}
+                aria-disabled={["/following", "/upload"].includes(item.href) && isLoading}
                 onClick={(event) => {
-                  if (item.href === "/following" && !requireAuth("Đăng nhập để xem các tài khoản bạn theo dõi.")) event.preventDefault();
+                  if (["/following", "/upload"].includes(item.href) && !requireAuth("Sign in to continue.")) event.preventDefault();
                 }}
                 className={cn(
                   "px-4 py-6 mb-2 hover:text-primary rounded-full",
