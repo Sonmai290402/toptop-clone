@@ -111,6 +111,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
             {t("profile")}
           </Link>
         )}
+        {user.role === "admin" && <Link className="block text-sm hover:text-primary" href="/admin">Admin</Link>}
         <Link
           className="block text-sm hover:text-primary"
           href="/auth/reset-password"

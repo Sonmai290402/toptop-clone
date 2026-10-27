@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import MediaPlayback from "../common/MediaPlayback";
+import type { PostSound } from "@/lib/sounds";
 import ExpandableCaption from "../common/ExpandableCaption";
 import type { FeedVideo } from "@/hooks/queries/useVideoFeed";
 import VideoActions from "../common/VideoActions";
@@ -17,6 +18,7 @@ type VideoPlayerProps = {
   isActive: boolean;
   volume: number;
   muted: boolean;
+  soundtrack?: PostSound | null;
   onVolumeChange: (volume: number, muted: boolean) => void;
   info: {
     username: string;
@@ -34,52 +36,11 @@ export default function VideoPlayer({
   isActive,
   volume,
   muted,
+  soundtrack,
   onVolumeChange,
   info,
 }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    const frame = frameRef.current;
-    if (!video || !frame) return;
-
-    const updateAspectRatio = () => {
-      if (video.videoWidth > 0 && video.videoHeight > 0) {
-        frame.style.setProperty(
-          "--video-aspect-ratio",
-          String(video.videoWidth / video.videoHeight),
-        );
-      }
-    };
-
-    video.addEventListener("loadedmetadata", updateAspectRatio);
-    // Metadata may already be loaded before hydration.
-    updateAspectRatio();
-    return () => video.removeEventListener("loadedmetadata", updateAspectRatio);
-  }, [src, mediaType]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video && video.volume !== volume) {
-      video.volume = volume;
-    }
-  }, [volume, mediaType]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (isActive) {
-      // Native controls remain available when autoplay is blocked.
-      void video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-
-    return () => video.pause();
-  }, [isActive, src, mediaType]);
 
   return (
     <div className="grid min-h-0 w-full min-w-0 max-w-[1400px] flex-1 grid-rows-[minmax(0,1fr)_minmax(0,0.7fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_clamp(18rem,30vw,24rem)] lg:grid-rows-1 lg:gap-6">
@@ -94,42 +55,10 @@ export default function VideoPlayer({
               aspectRatio: "var(--video-aspect-ratio, 0.5625)",
             }}
           >
-            {mediaType === "image" ? <Image
-              src={src}
-              alt={title}
-              fill
-              unoptimized
-              sizes="(min-width: 1024px) 65vw, 100vw"
-              onLoad={event => {
-                const image = event.currentTarget;
-                if (image.naturalWidth && image.naturalHeight) {
-                  frameRef.current?.style.setProperty("--video-aspect-ratio", String(image.naturalWidth / image.naturalHeight));
-                }
-              }}
-              className="object-contain"
-            /> : <video
-              ref={videoRef}
-              src={src}
-              aria-label={title}
-              controls
-              muted={muted}
-              onVolumeChange={(event) => {
-                const video = event.currentTarget;
-
-                // Ignore volume events produced by syncing other players.
-                if (
-                  isActive &&
-                  (video.volume !== volume || video.muted !== muted)
-                ) {
-                  onVolumeChange(video.volume, video.muted);
-                }
-              }}
-              playsInline
-              loop
-              preload="metadata"
-              className="block h-full w-full object-contain"
-            />}
-            <div className={`absolute bottom-0 left-0 max-h-full w-full overflow-y-auto overscroll-contain bg-gradient-to-t from-black/70 to-transparent p-3 text-white transition-[bottom] duration-400 ${mediaType === "video" ? "group-hover/video:bottom-[66px] group-hover/video:max-h-[calc(100%-66px)] group-hover/video:bg-black/50" : ""}`}>
+            <MediaPlayback src={src} mediaType={mediaType} title={title} soundtrack={soundtrack} active={isActive} autoPlay
+              volume={volume} muted={muted} onVolumeChange={onVolumeChange}
+              onDimensions={(width, height) => { if (width > 0 && height > 0) frameRef.current?.style.setProperty("--video-aspect-ratio", String(width / height)); }} />
+            <div className={`absolute left-0 w-full overflow-y-auto overscroll-contain bg-gradient-to-t from-black/70 to-transparent p-3 text-white transition-[bottom] duration-400 ${soundtrack ? "bottom-[88px] max-h-[calc(100%-88px)]" : mediaType === "video" ? "bottom-0 max-h-full group-hover/video:bottom-[66px] group-hover/video:max-h-[calc(100%-66px)] group-hover/video:bg-black/50" : "bottom-0 max-h-full"}`}>
               <div className="flex min-w-0 items-center">
                 <Link href={`/@${encodeURIComponent(info.username)}`} className="truncate font-semibold hover:underline">{info.username}</Link>
                 {info.time && (
@@ -139,6 +68,7 @@ export default function VideoPlayer({
                 )}
               </div>
               <ExpandableCaption text={info.description} expandedClassName="max-h-[min(30dvh,10rem)]" buttonClassName="text-white" />
+              {soundtrack && <p className="mt-1 truncate text-xs" title={`${soundtrack.sound.title} — ${soundtrack.sound.artist}`}>♫ {soundtrack.sound.title} — {soundtrack.sound.artist}</p>}
             </div>
           </div>
         </div>

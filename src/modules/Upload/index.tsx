@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UploadCloud } from "lucide-react";
@@ -13,6 +12,9 @@ import {
 } from "@/lib/api/uploads.api";
 import { uploadMimeTypes, uploadSchema } from "@/lib/uploads";
 import ExpandableCaption from "@/components/common/ExpandableCaption";
+import MediaPlayback from "@/components/common/MediaPlayback";
+import SoundPicker from "@/components/common/SoundPicker";
+import type { PostSound } from "@/lib/sounds";
 
 export default function Upload() {
   const { user } = useAuth();
@@ -20,6 +22,10 @@ export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [caption, setCaption] = useState("");
+  const [sound, setSound] = useState<PostSound | null>(null);
+  const [mediaDuration, setMediaDuration] = useState(0);
+  const [previewVolume, setPreviewVolume] = useState(1);
+  const [previewMuted, setPreviewMuted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
@@ -54,6 +60,8 @@ export default function Upload() {
       return;
     }
     setUploadedId(null);
+    setSound(null);
+    setMediaDuration(0);
     setFile(next);
     setPreview(URL.createObjectURL(next));
     setProgress(0);
@@ -76,11 +84,13 @@ export default function Upload() {
         id = ticket.id;
         setUploadedId(id);
       }
-      await publishUpload(id, caption, abort.signal);
+      const selection = sound ? { soundId: sound.soundId, startMs: sound.startMs, durationMs: sound.durationMs, musicVolume: sound.musicVolume, originalVolume: sound.originalVolume } : null;
+      await publishUpload(id, caption, abort.signal, selection);
       setUploadedId(null);
       setFile(null);
       setPreview("");
       setCaption("");
+      setSound(null);
       if (input.current) input.current.value = "";
       setMessage("Your post was uploaded successfully.");
       void client.invalidateQueries({ queryKey: ["my-posts", user?.id] });
@@ -129,22 +139,10 @@ export default function Upload() {
           </label>
           {file && preview && (
             <div className="relative flex h-72 justify-center overflow-hidden rounded-xl bg-black">
-              {file.type.startsWith("video/") ? (
-                <video
-                  src={preview}
-                  controls
-                  playsInline
-                  className="h-full w-full object-contain"
-                />
-              ) : (
-                <Image
-                  src={preview}
-                  alt="Selected photo preview"
-                  fill
-                  unoptimized
-                  className="object-contain"
-                />
-              )}
+              <MediaPlayback key={`${preview}:${sound?.soundId ?? "none"}:${sound?.startMs}:${sound?.durationMs}`} src={preview} mediaType={file.type.startsWith("video/") ? "video" : "image"}
+                title="Selected media preview" soundtrack={sound} active={!busy} volume={previewVolume} muted={previewMuted}
+                onVolumeChange={(volume, muted) => { setPreviewVolume(volume); setPreviewMuted(muted); }}
+                onDuration={seconds => setMediaDuration(Number.isFinite(seconds) ? seconds : 0)} />
             </div>
           )}
           {file && (
@@ -169,6 +167,7 @@ export default function Upload() {
           <p className="text-right text-sm text-muted-foreground">
             {caption.length} / 2200
           </p>
+          {file && <SoundPicker value={sound} onChange={setSound} mediaType={file.type.startsWith("video/") ? "video" : "image"} mediaDuration={mediaDuration} disabled={busy} />}
           {busy && (
             <div role="status">
               <progress
@@ -232,23 +231,8 @@ export default function Upload() {
               className="min-w-0 overflow-hidden rounded-xl border bg-card"
             >
               <div className="relative h-64 bg-black">
-                {post.mediaType === "video" ? (
-                  <video
-                    src={post.mediaUrl}
-                    controls
-                    playsInline
-                    preload="metadata"
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <Image
-                    src={post.mediaUrl}
-                    alt={post.caption || "Uploaded photo"}
-                    fill
-                    unoptimized
-                    className="object-contain"
-                  />
-                )}
+                <MediaPlayback src={post.mediaUrl} mediaType={post.mediaType} title={post.caption || "Uploaded post"} soundtrack={post.soundtrack}
+                  volume={previewVolume} muted={previewMuted} onVolumeChange={(volume, muted) => { setPreviewVolume(volume); setPreviewMuted(muted); }} />
               </div>
               <ExpandableCaption text={post.caption || "No caption"} className="p-3" buttonClassName="text-primary" />
             </article>

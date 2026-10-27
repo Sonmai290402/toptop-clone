@@ -1,5 +1,10 @@
 # Backend API — Toptop
 
+Admin-only sound uploads and role setup: [Admin API](./ADMIN.md).
+
+Sound library, per-post soundtrack selection and manual Supabase setup:
+[Sounds API and setup](./SOUNDS.md).
+
 Real media post comments, likes, saves, private collections and follow UI integration:
 [Post interactions](./POST-INTERACTIONS.md).
 

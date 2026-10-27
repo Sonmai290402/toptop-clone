@@ -2,7 +2,8 @@ import "server-only";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError, databaseError } from "@/server/shared/errors";
-import { postDto } from "../uploads/upload.service";
+import { postDtos } from "../uploads/upload.service";
+import { postSoundFields } from "@/lib/sounds";
 
 export const commentInput = z.object({ content: z.string().trim().min(1).max(1000) }).strict();
 export const interactionPage = z.object({ limit: z.coerce.number().int().min(1).max(50).default(20), offset: z.coerce.number().int().min(0).max(100000).default(0) }).strict();
@@ -41,6 +42,6 @@ export async function createPostComment(db: SupabaseClient, postId: string, user
 export async function listInteractedPosts(db: SupabaseClient, kind: "liked" | "saved", input: z.infer<typeof interactionPage>) {
   const { data, error } = await db.rpc("my_interacted_posts", { p_kind: kind, p_limit: input.limit + 1, p_offset: input.offset });
   if (error) databaseError(error);
-  const rows = z.array(z.object({ id: z.uuid(), user_id: z.uuid(), mime_type: z.string(), storage_path: z.string(), caption: z.string(), created_at: z.string() })).parse(data);
-  return { data: rows.slice(0, input.limit).map(row => postDto(db, row)), pagination: { hasMore: rows.length > input.limit, nextOffset: rows.length > input.limit ? input.offset + input.limit : null } };
+  const rows = z.array(z.object({ ...postSoundFields, id: z.uuid(), user_id: z.uuid(), mime_type: z.string(), storage_path: z.string(), caption: z.string(), created_at: z.string() })).parse(data);
+  return { data: await postDtos(db, rows.slice(0, input.limit)), pagination: { hasMore: rows.length > input.limit, nextOffset: rows.length > input.limit ? input.offset + input.limit : null } };
 }

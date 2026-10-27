@@ -31,6 +31,11 @@ import { GET as getPosts } from "../../src/app/api/v1/posts/route";
 import { GET as mediaFeed } from "../../src/app/api/v1/posts/feed/route";
 import { GET as getPost } from "../../src/app/api/v1/posts/[postId]/route";
 import { GET as getUserPosts } from "../../src/app/api/v1/users/[userId]/posts/route";
+import { GET as getSounds } from "../../src/app/api/v1/sounds/route";
+import { GET as getSound } from "../../src/app/api/v1/sounds/[soundId]/route";
+import { GET as adminSounds } from "../../src/app/api/v1/admin/sounds/route";
+import { POST as adminSoundUpload } from "../../src/app/api/v1/admin/sounds/uploads/route";
+import { POST as adminSoundComplete } from "../../src/app/api/v1/admin/sounds/uploads/[uploadId]/complete/route";
 
 const userId = "00000000-0000-4000-8000-000000000001";
 const videoId = "10000000-0000-4000-8000-000000000001";
@@ -50,6 +55,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
   process.env.APP_URL = "http://localhost:3000";
   const requests: { path: string; body: Record<string, unknown> | null; authorization: string | null }[] = [];
   let invalidToken = false;
+  let adminRole = false;
   let owner = userId;
   let sessionCookie = "";
   let missingProfile = false;
@@ -61,7 +67,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     const body = request.body ? await request.json() : null;
     requests.push({ path: url.pathname, body, authorization: request.headers.get("authorization") });
     if (url.pathname === "/auth/v1/user") {
-      return Response.json(invalidToken ? { code: "bad_jwt", message: "Invalid JWT" } : authUser, { status: invalidToken ? 401 : 200 });
+      return Response.json(invalidToken ? { code: "bad_jwt", message: "Invalid JWT" } : { ...authUser, app_metadata: { app_role: adminRole ? "admin" : "user" }, user_metadata: { ...authUser.user_metadata, role: "admin" } }, { status: invalidToken ? 401 : 200 });
     }
     const mediaRow = { id: videoId, user_id: userId, storage_path: `${userId}/${videoId}.mp4`, mime_type: "video/mp4", caption: "Upload test", created_at: "2026-10-26T00:00:00Z" };
     if (url.pathname === "/rest/v1/rpc/post_interaction_state") return Response.json({ likeCount: 1, commentCount: 1, isLiked: true, isSaved: true, isFollowing: false });
@@ -99,7 +105,21 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       return Response.json(rows.slice(offset, offset + Number(url.searchParams.get("limit") ?? 20)));
     }
     if (url.pathname.startsWith("/storage/v1/object/upload/sign/posts/")) return Response.json({ url: `/object/upload/sign/posts/${mediaRow.storage_path}?token=test-signed-token` });
-    if (url.pathname === "/rest/v1/rpc/publish_media_post") return Response.json(mediaRow);
+    if (url.pathname === "/rest/v1/rpc/publish_media_post_with_sound") return Response.json({ ...mediaRow, sound_id: body.p_sound_id, sound_start_ms: body.p_start_ms, sound_duration_ms: body.p_duration_ms, music_volume: body.p_music_volume, original_volume: body.p_original_volume });
+    if (url.pathname === "/rest/v1/rpc/is_app_admin") return Response.json(adminRole);
+    if (url.pathname === "/rest/v1/sound_uploads") {
+      assert.equal(body.user_id, userId);
+      assert.equal(body.mime_type, "audio/mpeg");
+      return Response.json({ id: videoId, storage_path: `admin/${userId}/${videoId}.mp3` });
+    }
+    if (url.pathname.startsWith("/storage/v1/object/upload/sign/sounds/")) return Response.json({ url: `/object/upload/sign/sounds/admin/${userId}/${videoId}.mp3?token=sound-test-token` });
+    if (url.pathname === "/rest/v1/rpc/publish_admin_sound") return Response.json({ id: videoId, title: body.p_title, artist: body.p_artist, duration_ms: body.p_duration_ms, storage_path: `admin/${userId}/${videoId}.mp3`, is_active: true, created_at: "2026-10-27T00:00:00Z" });
+    if (url.pathname === "/rest/v1/sounds") {
+      if (!adminRole) assert.equal(url.searchParams.get("is_active"), "eq.true");
+      const row = { id: commentId, title: "Demo sound", artist: "Demo artist", storage_path: "demo.mp3", duration_ms: 30000, is_active: true, created_at: "2026-10-27T00:00:00Z" };
+      if (url.searchParams.has("id") && !url.searchParams.get("id")?.startsWith("in.")) return Response.json(url.searchParams.get("id") === `eq.${commentId}` ? row : null);
+      return Response.json([row]);
+    }
     if (["/auth/v1/logout", "/auth/v1/recover", "/auth/v1/resend"].includes(url.pathname)) return Response.json({});
     if (url.pathname === "/rest/v1/profiles") return Response.json(missingProfile ? null : { id: userId, username: "alice", display_name: "Alice", avatar_url: null });
     if (url.pathname === "/rest/v1/rpc/api_profile") return Response.json(missingProfile ? null : {
@@ -132,6 +152,48 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   try {
+    await t.test("admin sound endpoints require trusted roles and validate upload requests", async () => {
+      const ctx = { params: Promise.resolve({ uploadId: videoId }) };
+      assert.equal((await adminSounds(new NextRequest("http://localhost:3000/api/v1/admin/sounds"))).status, 401);
+      const before = requests.length;
+      assert.equal((await adminSounds(request("admin/sounds"))).status, 403);
+      assert.equal((await adminSoundUpload(request("admin/sounds/uploads", "POST", { mimeType: "audio/mpeg", size: 100 }))).status, 403);
+      assert.equal((await adminSoundComplete(request(`admin/sounds/uploads/${videoId}/complete`, "POST", { title: "Test", artist: "Artist", durationMs: 1000 }), ctx)).status, 403);
+      assert.ok(requests.slice(before).every(item => item.path === "/auth/v1/user"), "Unauthorized callers never reach database or Storage writes");
+      adminRole = true;
+      try {
+        assert.equal((await adminSounds(request("admin/sounds"))).status, 200);
+        assert.equal((await adminSoundUpload(request("admin/sounds/uploads", "POST", { mimeType: "video/mp4", size: 100 }))).status, 400);
+        assert.equal((await adminSoundUpload(request("admin/sounds/uploads", "POST", { mimeType: "audio/mpeg", size: 100, userId: videoId }))).status, 400);
+        const ticket = await adminSoundUpload(request("admin/sounds/uploads", "POST", { mimeType: "audio/mpeg", size: 100 }));
+        assert.equal(ticket.status, 201);
+        assert.match((await ticket.json()).data.signedUrl, /sound-test-token/);
+        assert.equal((await adminSoundComplete(request(`admin/sounds/uploads/${videoId}/complete`, "POST", { title: "Test", artist: "Artist", durationMs: 0 }), ctx)).status, 400);
+        const complete = await adminSoundComplete(request(`admin/sounds/uploads/${videoId}/complete`, "POST", { title: " Test ", artist: "Artist", durationMs: 12345 }), ctx);
+        assert.equal(complete.status, 200);
+        const track = (await complete.json()).data;
+        assert.equal(track.title, "Test");
+        assert.equal(track.durationMs, 12345);
+        assert.equal(track.isActive, true);
+        assert.equal(track.storage_path, undefined);
+      } finally { adminRole = false; }
+    });
+    await t.test("sound library is public and sound selection reaches the publish RPC", async () => {
+      const response = await getSounds(new NextRequest("http://localhost:3000/api/v1/sounds?q=Demo"));
+      assert.equal(response.status, 200);
+      assert.match((await response.json()).data[0].audioUrl, /\/storage\/v1\/object\/public\/sounds\//);
+      assert.equal((await getSounds(new NextRequest("http://localhost:3000/api/v1/sounds?limit=100"))).status, 400);
+      assert.equal((await getSound(new NextRequest(`http://localhost:3000/api/v1/sounds/${videoId}`), { params: Promise.resolve({ soundId: videoId }) })).status, 404);
+      const sound = { soundId: commentId, startMs: 1000, durationMs: 5000, musicVolume: 0.7, originalVolume: 0.2 };
+      const responseWithSound = await completeUpload(request(`uploads/${videoId}/complete`, "POST", { caption: "Music", sound }), { params: Promise.resolve({ uploadId: videoId }) });
+      assert.equal(responseWithSound.status, 200);
+      const soundtrack = (await responseWithSound.json()).data.soundtrack;
+      assert.equal(soundtrack.startMs, 1000);
+      assert.equal(soundtrack.sound.title, "Demo sound");
+      assert.equal(soundtrack.originalVolume, 0.2);
+      const invalid = await completeUpload(request(`uploads/${videoId}/complete`, "POST", { caption: "Music", sound: { ...sound, audioUrl: "https://invalid.test/file" } }), { params: Promise.resolve({ uploadId: videoId }) });
+      assert.equal(invalid.status, 400);
+    });
     await t.test("real post comments and interactions enforce authentication and payload ownership", async () => {
       const context = { params: Promise.resolve({ postId: videoId }) };
       const guest = (suffix: string, method = "GET", body?: object) => new NextRequest(`http://localhost:3000/api/v1/posts/${videoId}/${suffix}`, { method, headers: { origin: "http://localhost:3000", "content-type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -213,7 +275,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       assert.equal((await myPosts(request("me/posts"))).status, 200);
     });
     await t.test("guest page requests redirect home without blocking public browsing", async () => {
-      for (const path of ["/upload", "/following", "/@alice"]) {
+      for (const path of ["/upload", "/following", "/@alice", "/admin", "/admin/sounds"]) {
         const response = await proxy(new NextRequest(`http://localhost:3000${path}`));
         assert.equal(response.status, 307);
         assert.equal(response.headers.get("location"), "http://localhost:3000/");
@@ -309,6 +371,20 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     const cookieRequest = (path: string, method = "GET", body?: object) => new NextRequest(`http://localhost:3000/api/v1/${path}`, {
       method, headers: { cookie: sessionCookie, origin: "http://localhost:3000", "content-type": "application/json" },
       ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    await t.test("admin pages check the current trusted role, including nested paths", async () => {
+      for (const path of ["/admin", "/admin/sounds", "/%61dmin/sounds"]) {
+        const pageRequest = () => new NextRequest(`http://localhost:3000${path}`, { headers: { cookie: sessionCookie } });
+        adminRole = false;
+        assert.equal((await proxy(pageRequest())).status, 307);
+        adminRole = true;
+        try {
+          const allowed = await proxy(pageRequest());
+          assert.equal(allowed.status, 200);
+          assert.equal(allowed.headers.get("cache-control"), "private, no-store");
+        } finally { adminRole = false; }
+        assert.equal((await proxy(pageRequest())).status, 307, "Revoked admins are rejected on the next request");
+      }
     });
     await t.test("session restores identity from cookies and app role is server controlled", async () => {
       const response = await session(cookieRequest("auth/session"));
