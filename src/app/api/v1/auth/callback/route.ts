@@ -11,7 +11,7 @@ const exchange = api(async (request, { db }) => {
   const params = request.nextUrl.searchParams;
   if (params.has("error") || params.has("error_code")) {
     const cancelled = params.get("error") === "access_denied" && !params.has("error_code");
-    throw new ApiError(400, cancelled ? "OAUTH_CANCELLED" : "OAUTH_FAILED", "Không thể hoàn tất đăng nhập. Vui lòng thử lại.");
+    throw new ApiError(400, cancelled ? "OAUTH_CANCELLED" : "OAUTH_FAILED", "Unable to complete sign-in. Please try again.");
   }
   const tokenHash = params.get("token_hash");
   const result = tokenHash
@@ -22,7 +22,7 @@ const exchange = api(async (request, { db }) => {
     : await db.auth.exchangeCodeForSession(parse(z.string().min(1).max(2048), params.get("code")));
   const { data, error } = result;
   if (error) authError(error);
-  if (!data.user || !data.session) throw new ApiError(400, "INVALID_SESSION", "Không thể tạo phiên đăng nhập. Vui lòng thử lại.");
+  if (!data.user || !data.session) throw new ApiError(400, "INVALID_SESSION", "Unable to create a session. Please try again.");
   return { data: await authPayload(db, data.user, data.session, isGoogleOAuth(request)) };
 }, { auth: "none", cookieOnly: true });
 

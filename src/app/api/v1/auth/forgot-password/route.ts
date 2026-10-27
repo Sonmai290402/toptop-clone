@@ -10,5 +10,5 @@ export const POST = api(async (request, { db }) => {
     redirectTo: `${getConfig().origin}/api/v1/auth/callback?flow=recovery`,
   });
   if (error) authError(error);
-  return { data: { message: "Nếu email có tài khoản, bạn sẽ nhận được liên kết đặt lại mật khẩu." } };
+  return { data: { message: "If an account exists for this email, you will receive a password reset link." } };
 }, { auth: "none", cookieOnly: true });

@@ -12,7 +12,7 @@ export function decodeCursor<T>(cursor: string | undefined, context: string, key
     const envelope = z.object({ version: z.literal(1), context: z.literal(context), key: keySchema }).strict();
     return envelope.parse(JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"))).key;
   } catch {
-    throw new ApiError(400, "INVALID_CURSOR", "Cursor không hợp lệ hoặc không thuộc bộ lọc hiện tại.");
+    throw new ApiError(400, "INVALID_CURSOR", "The cursor is invalid or does not match the current filters.");
   }
 }
 

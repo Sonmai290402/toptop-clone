@@ -5,7 +5,7 @@ import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "@/components/layout/AppSidebar";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthProvider from "@/providers/AuthProvider";
 
@@ -21,9 +21,10 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const messages = await getMessages();
+  const locale = await getLocale();
 
   return (
-    <html className={`${manrope.variable} h-full antialiased dark`}>
+    <html lang={locale} className={`${manrope.variable} h-full antialiased dark`}>
       <body className="min-h-full p-4">
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>

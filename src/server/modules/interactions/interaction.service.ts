@@ -16,7 +16,7 @@ export async function setVideoInteraction(db: SupabaseClient, kind: "like" | "sa
 }
 
 export async function setFollow(db: SupabaseClient, userId: string, targetId: string, active: boolean) {
-  if (userId === targetId) throw new ApiError(400, "SELF_FOLLOW", "Không thể tự theo dõi chính mình.");
+  if (userId === targetId) throw new ApiError(400, "SELF_FOLLOW", "You cannot follow yourself.");
   await getProfile(db, targetId);
   const result = active
     ? await db.from("follows").insert({ follower_id: userId, following_id: targetId })

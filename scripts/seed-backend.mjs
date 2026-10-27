@@ -14,7 +14,7 @@ function checked({ data, error }) {
 }
 
 const users = [];
-for (const [username, name] of [["demo_linhchi", "Linh Chi"], ["demo_tuananh", "Tuấn Anh"]]) {
+for (const [username, name] of [["demo_linhchi", "Linh Chi"], ["demo_tuananh", "Tuan Anh"]]) {
   const email = `${username}@example.com`;
   const existing = checked(await db.from("profiles").select("id").eq("username", username).maybeSingle());
   let id;
@@ -39,7 +39,7 @@ const ids = [
   "10000000-0000-4000-8000-000000000005",
   "10000000-0000-4000-8000-000000000006",
 ];
-const descriptions = ["Một khoảnh khắc giữa thiên nhiên.", "Lưu lại những điều đẹp đẽ.", "Nhịp sống thành phố.", "Một ngày bình yên."];
+const descriptions = ["A moment in nature.", "Capturing beautiful moments.", "The rhythm of city life.", "A peaceful day."];
 checked(await db.from("videos").upsert(ids.map((id, index) => ({
   id, author_id: users[index % 2], video_url: `/demo-videos/demo-video-${index + 3}.mp4`,
   description: descriptions[index], is_pinned: index === 0, view_count: [1000, 2643, 17889, 59][index],
@@ -47,7 +47,7 @@ checked(await db.from("videos").upsert(ids.map((id, index) => ({
 })), { onConflict: "id" }));
 checked(await db.from("comments").upsert({
   id: "20000000-0000-4000-8000-000000000001", video_id: ids[0], author_id: users[1],
-  content: "Video đẹp quá!", created_at: "2026-10-23T08:00:00Z",
+  content: "Beautiful video!", created_at: "2026-10-23T08:00:00Z",
 }, { onConflict: "id" }));
 console.log("Seed complete: 2 demo users, 4 videos, 1 comment.");
 console.log("Sign in with demo_linhchi@example.com or demo_tuananh@example.com and the initial SEED_DEMO_PASSWORD.");

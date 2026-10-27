@@ -16,6 +16,6 @@ export default function GoogleSignInButton({ pending, disabled, onClick }: {
         <path fill="#EA4335" d="M12 5.96c1.47 0 2.79.51 3.82 1.51l2.86-2.86A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.94 5.5l3.34 2.59C7.19 7.72 9.4 5.96 12 5.96Z" />
       </svg>
     )}
-    {pending ? "Đang chuyển đến Google..." : "Tiếp tục với Google"}
+    {pending ? "Redirecting to Google..." : "Continue with Google"}
   </Button>;
 }

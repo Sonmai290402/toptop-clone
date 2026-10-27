@@ -7,5 +7,5 @@ export const POST = api(async (request, { db }) => {
   const input = await readJson(request, z.object({ password: z.string().min(8).max(128) }).strict());
   const { error } = await db.auth.updateUser(input);
   if (error) authError(error);
-  return { data: { message: "Đã cập nhật mật khẩu." } };
+  return { data: { message: "Your password has been updated." } };
 }, { auth: "required", cookieOnly: true });

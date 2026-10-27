@@ -28,8 +28,8 @@ export async function createComment(db: SupabaseClient, videoId: string, userId:
 export async function deleteComment(db: SupabaseClient, id: string, userId: string) {
   const { data, error } = await db.from("comments").select("author_id").eq("id", id).maybeSingle();
   if (error) databaseError(error);
-  if (!data) throw new ApiError(404, "COMMENT_NOT_FOUND", "Bình luận không tồn tại.");
-  if (data.author_id !== userId) throw new ApiError(403, "FORBIDDEN", "Chỉ được xóa bình luận của chính mình.");
+  if (!data) throw new ApiError(404, "COMMENT_NOT_FOUND", "Comment not found.");
+  if (data.author_id !== userId) throw new ApiError(403, "FORBIDDEN", "You can only delete your own comments.");
   const result = await db.from("comments").delete().eq("id", id).eq("author_id", userId);
   if (result.error) databaseError(result.error);
 }

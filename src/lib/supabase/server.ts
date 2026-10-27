@@ -12,7 +12,7 @@ export function createRequestClient(request: NextRequest) {
   let token: string | undefined;
   if (authorization !== null) {
     const match = /^Bearer ([^\s]+)$/i.exec(authorization);
-    if (!match) throw new ApiError(401, "INVALID_TOKEN", "Authorization phải có dạng Bearer <access_token>.");
+    if (!match) throw new ApiError(401, "INVALID_TOKEN", "Authorization must use the format Bearer <access_token>.");
     token = match[1];
   }
   const supabase = token

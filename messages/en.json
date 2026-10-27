@@ -2,5 +2,8 @@
   "search": "Search",
   "for-you": "For You",
   "explore": "Explore",
-  "following": "Following"
+  "following": "Following",
+  "profile": "Profile",
+  "change-password": "Change password",
+  "logout": "Logout"
 }

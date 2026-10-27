@@ -14,7 +14,7 @@ export function assertOrigin(request: Request, expectedOrigin: string, bearer: b
   if (["GET", "HEAD", "OPTIONS"].includes(request.method)) return;
   const origin = request.headers.get("origin");
   if ((origin && origin !== expectedOrigin) || (!bearer && origin !== expectedOrigin)) {
-    throw new ApiError(403, "INVALID_ORIGIN", "Origin không hợp lệ. Gửi Origin trùng với APP_URL.");
+    throw new ApiError(403, "INVALID_ORIGIN", "Invalid Origin. Send an Origin that matches APP_URL.");
   }
 }
 
@@ -32,7 +32,7 @@ export function api(
       const config = getConfig();
       // Auth endpoints use cookies. A bearer token must not silently override them.
       if (options.cookieOnly && authorization !== null) {
-        throw new ApiError(400, "COOKIE_AUTH_REQUIRED", "Endpoint này dùng cookie; không gửi Authorization.");
+        throw new ApiError(400, "COOKIE_AUTH_REQUIRED", "This endpoint uses cookies; do not send an Authorization header.");
       }
       assertOrigin(request, config.origin, authorization !== null && !options.cookieOnly);
       client = createRequestClient(request);
@@ -41,9 +41,9 @@ export function api(
       if (options.auth !== "none") {
         const { data, error } = await client.supabase.auth.getUser(client.token);
         if (error && error.name !== "AuthSessionMissingError") {
-          if (error.status && error.status >= 500) throw new ApiError(503, "AUTH_UNAVAILABLE", "Không thể kết nối dịch vụ xác thực.");
+          if (error.status && error.status >= 500) throw new ApiError(503, "AUTH_UNAVAILABLE", "Unable to connect to the authentication service.");
           if (options.auth === "required" || client.token) {
-            throw new ApiError(401, "INVALID_SESSION", "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+            throw new ApiError(401, "INVALID_SESSION", "Your session is invalid or has expired.");
           }
           // Expired cookies must not block public browsing. Anonymous reads use
           // a fresh client without the stale token, while protected APIs stay 401.
@@ -53,7 +53,7 @@ export function api(
         }
         user = error ? null : data.user;
         if ((options.auth === "required" || client.token) && !user) {
-          throw new ApiError(401, "UNAUTHENTICATED", "Vui lòng đăng nhập.");
+          throw new ApiError(401, "UNAUTHENTICATED", "Please sign in.");
         }
       }
       const result = await handler(request, { db, user, token: client.token });
@@ -62,7 +62,7 @@ export function api(
     } catch (error) {
       const failure = error instanceof ApiError
         ? error
-        : new ApiError(500, "INTERNAL_ERROR", "Đã xảy ra lỗi máy chủ.");
+        : new ApiError(500, "INTERNAL_ERROR", "An internal server error occurred.");
       if (!(error instanceof ApiError)) console.error("API failed", error instanceof Error ? error.name : "UnknownError");
       response = NextResponse.json({ error: { code: failure.code, message: failure.message, ...(failure.details ? { details: failure.details } : {}) } }, { status: failure.status });
     }

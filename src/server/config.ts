@@ -13,7 +13,7 @@ export function getConfig() {
     appUrl: process.env.APP_URL,
   });
   if (!result.success || result.data.url.includes("YOUR_PROJECT") || result.data.key.includes("YOUR_")) {
-    throw new ApiError(503, "BACKEND_NOT_CONFIGURED", "Cấu hình Supabase và APP_URL trong .env.local trước khi dùng API.");
+    throw new ApiError(503, "BACKEND_NOT_CONFIGURED", "Configure Supabase and APP_URL in .env.local before using the API.");
   }
   return { ...result.data, origin: new URL(result.data.appUrl).origin };
 }

@@ -30,11 +30,11 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     throw new ApiClientError(
       response.status,
       body?.error?.code ?? "HTTP_ERROR",
-      body?.error?.message ?? "Không thể tải dữ liệu. Vui lòng thử lại.",
+      body?.error?.message ?? "Unable to load data. Please try again.",
     );
   }
   if (body === null) {
-    throw new ApiClientError(response.status, "INVALID_RESPONSE", "API trả về dữ liệu không hợp lệ.");
+    throw new ApiClientError(response.status, "INVALID_RESPONSE", "The API returned an invalid response.");
   }
   return body as T;
 }

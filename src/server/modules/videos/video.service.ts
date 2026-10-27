@@ -9,7 +9,7 @@ import { videoCursor } from "./video.schema";
 export async function getVideo(db: SupabaseClient, id: string) {
   const { data, error } = await db.rpc("api_video", { p_video_id: id });
   if (error) databaseError(error);
-  if (!data) throw new ApiError(404, "VIDEO_NOT_FOUND", "Video không tồn tại.");
+  if (!data) throw new ApiError(404, "VIDEO_NOT_FOUND", "Video not found.");
   return videoDto.parse(data);
 }
 

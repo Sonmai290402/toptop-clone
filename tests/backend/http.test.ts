@@ -40,8 +40,8 @@ test("pagination rejects invalid/cross-filter cursors and strips internal sort k
   const key = { pin: 0 as const, value: "123.123456", id: "10000000-0000-4000-8000-000000000001" };
   const cursor = encodeCursor("feed:alice", key);
   assert.deepEqual(decodeCursor(cursor, "feed:alice", videoCursor), key);
-  assert.throws(() => decodeCursor(cursor, "feed:bob", videoCursor), /Cursor/);
-  assert.throws(() => decodeCursor("not-valid-json", "feed:alice", videoCursor), /Cursor/);
+  assert.throws(() => decodeCursor(cursor, "feed:bob", videoCursor), { code: "INVALID_CURSOR" });
+  assert.throws(() => decodeCursor("not-valid-json", "feed:alice", videoCursor), { code: "INVALID_CURSOR" });
   assert.throws(() => decodeCursor(encodeCursor("feed:alice", { ...key, value: "1);drop table" }), "feed:alice", videoCursor));
   const page = paginate([{ id: "1", cursorKey: key }, { id: "2", cursorKey: key }], 1, "feed:alice");
   assert.deepEqual(page.data, [{ id: "1" }]);

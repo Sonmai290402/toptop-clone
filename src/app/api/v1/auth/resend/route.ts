@@ -11,5 +11,5 @@ export const POST = api(async (request, { db }) => {
     options: { emailRedirectTo: `${getConfig().origin}/api/v1/auth/callback` },
   });
   if (error) authError(error);
-  return { data: { message: "Nếu tài khoản cần xác nhận, liên kết đã được gửi đến email của bạn." } };
+  return { data: { message: "If your account needs confirmation, a link has been sent to your email." } };
 }, { auth: "none", cookieOnly: true });

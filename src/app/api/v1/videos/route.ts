@@ -6,6 +6,6 @@ import { listVideos } from "@/server/modules/videos/video.service";
 
 export const GET = api(async (request, { db, user }) => {
   const query = parse(feedQuery, Object.fromEntries(request.nextUrl.searchParams));
-  if (query.feed === "following" && !user) throw new ApiError(401, "UNAUTHENTICATED", "Vui lòng đăng nhập.");
+  if (query.feed === "following" && !user) throw new ApiError(401, "UNAUTHENTICATED", "Please sign in.");
   return listVideos(db, { ...query, sort: "latest", scope: query.feed === "following" ? "following" : "all", viewerId: user?.id });
 });

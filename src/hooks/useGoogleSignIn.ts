@@ -14,12 +14,12 @@ export function useGoogleSignIn() {
         window.location.assign(result.data.url);
       } catch (error) {
         if (error instanceof ApiClientError && error.code === "BACKEND_NOT_CONFIGURED") {
-          throw new Error("Đăng nhập chưa được cấu hình. Vui lòng thử lại sau.");
+          throw new Error("Sign-in is not configured. Please try again later.");
         }
         if (error instanceof ApiClientError && error.code === "INVALID_ORIGIN") {
-          throw new Error("Địa chỉ website chưa khớp cấu hình đăng nhập (APP_URL).");
+          throw new Error("The website address does not match the sign-in configuration (APP_URL).");
         }
-        throw new Error("Không thể kết nối đăng nhập Google. Vui lòng thử lại.");
+        throw new Error("Unable to connect to Google sign-in. Please try again.");
       }
     },
     retry: false,
