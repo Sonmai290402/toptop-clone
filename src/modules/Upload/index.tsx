@@ -12,6 +12,7 @@ import {
   uploadFile,
 } from "@/lib/api/uploads.api";
 import { uploadMimeTypes, uploadSchema } from "@/lib/uploads";
+import ExpandableCaption from "@/components/common/ExpandableCaption";
 
 export default function Upload() {
   const { user } = useAuth();
@@ -224,7 +225,7 @@ export default function Upload() {
             Your published posts will appear here.
           </p>
         )}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {posts.data?.data.map((post) => (
             <article
               key={post.id}
@@ -249,9 +250,7 @@ export default function Upload() {
                   />
                 )}
               </div>
-              <p className="break-words p-3 text-sm">
-                {post.caption || "No caption"}
-              </p>
+              <ExpandableCaption text={post.caption || "No caption"} className="p-3" buttonClassName="text-primary" />
             </article>
           ))}
         </div>

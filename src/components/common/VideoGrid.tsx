@@ -7,7 +7,7 @@ type VideoGridProps = {
 
 export default function VideoGrid({
   videos,
-  emptyMessage = "Chưa có video nào.",
+  emptyMessage = "No posts yet.",
 }: VideoGridProps) {
   if (videos.length === 0) {
     return (
@@ -17,11 +17,11 @@ export default function VideoGrid({
 
   return (
     <section
-      aria-label="Danh sách video"
+      aria-label="Posts"
       className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
     >
       {videos.map((video) => (
-        <VideoCard key={video.id} video={video} />
+        <VideoCard key={`${video.id}:${video.mediaType}:${video.videoUrl}`} video={video} />
       ))}
     </section>
   );

@@ -22,6 +22,7 @@ test("media interactions isolate users and posts, enforce RLS and return real co
       grant select on public.media_posts to anon, authenticated;
     `);
     await db.exec(await readFile(new URL("../../supabase/migrations/20261026000500_media_interactions.sql", import.meta.url), "utf8"));
+    await db.exec(await readFile(new URL("../../supabase/migrations/20261027000200_mixed_profile_collections.sql", import.meta.url), "utf8"));
     await db.query("insert into public.profiles values ($1),($2)", [alice, bob]);
     await db.query("insert into public.media_posts(id,user_id,mime_type,published_at) values ($1,$4,'video/mp4',now()),($2,$4,'video/mp4',now()),($3,$4,'video/mp4',null)", [post, other, pending, bob]);
     async function role(name: "anon" | "authenticated", id = "") {
@@ -75,5 +76,31 @@ test("media interactions isolate users and posts, enforce RLS and return real co
     await role("anon");
     assert.equal((await db.query("select * from public.post_comments")).rows.length, 0);
     assert.equal(await state(), null);
+    await db.exec("reset role");
+    await db.query("update public.media_posts set mime_type='image/jpeg' where id=$1", [other]);
+    await role("authenticated", alice);
+    for (const table of ["post_likes", "post_saves"]) {
+      await db.query(`insert into public.${table}(post_id,user_id) values ($1,$2)`, [other, alice]);
+    }
+    await db.exec("reset role");
+    await db.query("update public.media_posts set published_at=now() where id=$1", [post]);
+    await role("authenticated", alice);
+    for (const table of ["post_likes", "post_saves"]) {
+      await db.query(`insert into public.${table}(post_id,user_id) values ($1,$2)`, [post, alice]);
+    }
+    type CollectionRow = { id: string; mime_type: string };
+    for (const kind of ["liked", "saved"]) {
+      const list = (await db.query<{ data: CollectionRow[] }>("select public.my_interacted_posts($1) as data", [kind])).rows[0].data;
+      assert.equal(list.length, 2);
+      assert.deepEqual(new Set(list.map(row => row.mime_type)), new Set(["video/mp4", "image/jpeg"]));
+      const second = (await db.query<{ data: CollectionRow[] }>("select public.my_interacted_posts($1,1,1) as data", [kind])).rows[0].data;
+      assert.equal(second[0].id, list[1].id);
+    }
+    await role("authenticated", bob);
+    assert.deepEqual((await db.query<{ data: CollectionRow[] }>("select public.my_interacted_posts('liked') as data")).rows[0].data, []);
+    await db.exec("reset role");
+    await db.query("update public.media_posts set published_at=null where id=$1", [other]);
+    await role("authenticated", alice);
+    assert.deepEqual((await db.query<{ data: CollectionRow[] }>("select public.my_interacted_posts('saved') as data")).rows[0].data.map(row => row.id), [post]);
   } finally { await db.close(); }
 });

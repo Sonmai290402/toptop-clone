@@ -14,7 +14,7 @@ const feedRow = z.object({
   author: z.object({ id: z.uuid(), username: z.string(), displayName: z.string(), avatarUrl: z.string().nullable() }),
 });
 export async function listVideoFeed(db: SupabaseClient, input: z.infer<typeof feedSchema>) {
-  const { data, error } = await db.rpc("media_video_feed", { p_feed: input.feed, p_limit: input.limit + 1, p_offset: input.offset });
+  const { data, error } = await db.rpc("media_post_feed", { p_feed: input.feed, p_limit: input.limit + 1, p_offset: input.offset });
   if (error) databaseError(error);
   const rows = z.array(feedRow).parse(data);
   const hasMore = rows.length > input.limit;

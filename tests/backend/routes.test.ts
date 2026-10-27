@@ -85,7 +85,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       assert.deepEqual(body, { user_id: userId, post_id: videoId });
       return url.pathname.endsWith("post_likes") ? Response.json({ code: "23505", message: "Duplicate like" }, { status: 409 }) : new Response(null, { status: 201 });
     }
-    if (url.pathname === "/rest/v1/rpc/media_video_feed") return Response.json([{ ...mediaRow, author }, { ...mediaRow, id: commentId, author }]);
+    if (url.pathname === "/rest/v1/rpc/media_post_feed") return Response.json([{ ...mediaRow, author }, { ...mediaRow, id: commentId, mime_type: "image/png", author }]);
     if (url.pathname === "/rest/v1/media_posts") {
       if (request.method === "POST") return Response.json(mediaRow);
       assert.equal(url.searchParams.get("published_at"), "not.is.null");
@@ -161,6 +161,9 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       assert.equal(page.data[0].author.username, "alice");
       assert.equal(page.data.length, 1);
       assert.equal(page.pagination.nextOffset, 1);
+      const mixedPage = await (await mediaFeed(new NextRequest("http://localhost:3000/api/v1/posts/feed?limit=2"))).json();
+      assert.deepEqual(mixedPage.data.map((post: { mediaType: string }) => post.mediaType), ["video", "image"]);
+      assert.equal(mixedPage.pagination.hasMore, false);
       assert.equal((await mediaFeed(new NextRequest("http://localhost:3000/api/v1/posts/feed?feed=following"))).status, 401);
       assert.equal((await mediaFeed(request("posts/feed?feed=following"))).status, 200);
       assert.equal(requests.at(-1)?.body?.p_feed, "following");

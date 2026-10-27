@@ -2,12 +2,15 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import ExpandableCaption from "../common/ExpandableCaption";
 import type { FeedVideo } from "@/hooks/queries/useVideoFeed";
 import VideoActions from "../common/VideoActions";
 import Comments from "../common/Comments";
 
 type VideoPlayerProps = {
   src: string;
+  mediaType: "video" | "image";
   postId: string;
   author: FeedVideo["author"];
   title: string;
@@ -24,6 +27,7 @@ type VideoPlayerProps = {
 
 export default function VideoPlayer({
   src,
+  mediaType,
   postId,
   author,
   title,
@@ -51,31 +55,31 @@ export default function VideoPlayer({
     };
 
     video.addEventListener("loadedmetadata", updateAspectRatio);
-    // Metadata có thể đã tải xong trước khi React hydrate.
+    // Metadata may already be loaded before hydration.
     updateAspectRatio();
     return () => video.removeEventListener("loadedmetadata", updateAspectRatio);
-  }, [src]);
+  }, [src, mediaType]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (video && video.volume !== volume) {
       video.volume = volume;
     }
-  }, [volume]);
+  }, [volume, mediaType]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     if (isActive) {
-      // Nếu autoplay bị chặn, người dùng vẫn có thể bấm Play trên controls.
+      // Native controls remain available when autoplay is blocked.
       void video.play().catch(() => {});
     } else {
       video.pause();
     }
 
     return () => video.pause();
-  }, [isActive]);
+  }, [isActive, src, mediaType]);
 
   return (
     <div className="grid min-h-0 w-full min-w-0 max-w-[1400px] flex-1 grid-rows-[minmax(0,1fr)_minmax(0,0.7fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_clamp(18rem,30vw,24rem)] lg:grid-rows-1 lg:gap-6">
@@ -90,7 +94,20 @@ export default function VideoPlayer({
               aspectRatio: "var(--video-aspect-ratio, 0.5625)",
             }}
           >
-            <video
+            {mediaType === "image" ? <Image
+              src={src}
+              alt={title}
+              fill
+              unoptimized
+              sizes="(min-width: 1024px) 65vw, 100vw"
+              onLoad={event => {
+                const image = event.currentTarget;
+                if (image.naturalWidth && image.naturalHeight) {
+                  frameRef.current?.style.setProperty("--video-aspect-ratio", String(image.naturalWidth / image.naturalHeight));
+                }
+              }}
+              className="object-contain"
+            /> : <video
               ref={videoRef}
               src={src}
               aria-label={title}
@@ -99,7 +116,7 @@ export default function VideoPlayer({
               onVolumeChange={(event) => {
                 const video = event.currentTarget;
 
-                // Bỏ qua sự kiện do đồng bộ props xuống các player khác.
+                // Ignore volume events produced by syncing other players.
                 if (
                   isActive &&
                   (video.volume !== volume || video.muted !== muted)
@@ -111,8 +128,8 @@ export default function VideoPlayer({
               loop
               preload="metadata"
               className="block h-full w-full object-contain"
-            />
-            <div className="absolute bottom-0 left-0 w-full group-hover/video:bg-black/50 p-3 text-white transition-[bottom] duration-400 group-hover/video:bottom-[66px]">
+            />}
+            <div className={`absolute bottom-0 left-0 max-h-full w-full overflow-y-auto overscroll-contain bg-gradient-to-t from-black/70 to-transparent p-3 text-white transition-[bottom] duration-400 ${mediaType === "video" ? "group-hover/video:bottom-[66px] group-hover/video:max-h-[calc(100%-66px)] group-hover/video:bg-black/50" : ""}`}>
               <div className="flex min-w-0 items-center">
                 <Link href={`/@${encodeURIComponent(info.username)}`} className="truncate font-semibold hover:underline">{info.username}</Link>
                 {info.time && (
@@ -121,9 +138,7 @@ export default function VideoPlayer({
                   </p>
                 )}
               </div>
-              <p className="line-clamp-2 wrap-anywhere text-sm">
-                {info.description}
-              </p>
+              <ExpandableCaption text={info.description} expandedClassName="max-h-[min(30dvh,10rem)]" buttonClassName="text-white" />
             </div>
           </div>
         </div>

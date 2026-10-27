@@ -34,6 +34,7 @@ test("uploads enforce ownership, file metadata and idempotent publishing", async
     await db.exec(await readFile(new URL("../../supabase/migrations/20261026000100_media_uploads.sql", import.meta.url), "utf8"));
     await db.exec(await readFile(new URL("../../supabase/migrations/20261026000200_public_posts.sql", import.meta.url), "utf8"));
     await db.exec(await readFile(new URL("../../supabase/migrations/20261026000400_media_video_feed.sql", import.meta.url), "utf8"));
+    await db.exec(await readFile(new URL("../../supabase/migrations/20261027000100_mixed_media_feed.sql", import.meta.url), "utf8"));
     await db.query("insert into public.profiles(id) values ($1), ($2)", [alice, bob]);
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", [alice]);
     await db.exec("set role authenticated");
@@ -81,5 +82,26 @@ test("uploads enforce ownership, file metadata and idempotent publishing", async
     const second = await db.query<{ data: { id: string }[] }>("select public.media_video_feed('for-you', 1, 1) as data");
     assert.equal(second.rows[0].data[0].id, publicFeed.rows[0].data[1].id);
     await assert.rejects(db.query("select public.media_video_feed('invalid', 10, 0)"), /Invalid feed/);
+    await db.exec("reset role");
+    await db.query("insert into public.media_posts(user_id,mime_type,size_bytes,published_at) values ($1,'image/jpeg',100,now()), ($1,'image/png',100,null)", [bob]);
+    await db.query("select set_config('request.jwt.claim.sub', '', false)");
+    await db.exec("set role anon");
+    type FeedRow = { id: string; user_id: string; mime_type: string; author: { id: string } };
+    const mixed = (await db.query<{ data: FeedRow[] }>("select public.media_post_feed('for-you', 10, 0) as data")).rows[0].data;
+    assert.equal(mixed.length, 4, "Mixed feed includes published images and videos only");
+    assert.equal(mixed.filter(row => row.mime_type.startsWith("image/")).length, 2);
+    assert.ok(mixed.every(row => row.author.id === row.user_id));
+    const mixedSecond = (await db.query<{ data: FeedRow[] }>("select public.media_post_feed('for-you', 2, 2) as data")).rows[0].data;
+    assert.deepEqual(mixedSecond.map(row => row.id), mixed.slice(2).map(row => row.id));
+    await assert.rejects(db.query("select public.media_post_feed('following', 10, 0)"), /Authentication required/);
+    await assert.rejects(db.query("select public.media_post_feed('for-you', 0, 0)"), /Invalid feed/);
+    await db.exec("reset role; set role authenticated");
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [alice]);
+    const mixedFollowing = (await db.query<{ data: FeedRow[] }>("select public.media_post_feed('following', 10, 0) as data")).rows[0].data;
+    assert.equal(mixedFollowing.length, 2);
+    assert.ok(mixedFollowing.every(row => row.user_id === bob));
+    assert.ok(mixedFollowing.some(row => row.mime_type === "image/jpeg"));
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [bob]);
+    assert.deepEqual((await db.query<{ data: FeedRow[] }>("select public.media_post_feed('following', 10, 0) as data")).rows[0].data, []);
   } finally { await db.close(); }
 });

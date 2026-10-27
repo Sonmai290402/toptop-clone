@@ -39,19 +39,19 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
     return () => observer.disconnect();
   }, [hasNextPage, isFetching, isFetchNextPageError, fetchNextPage]);
 
-  return <div ref={feedRef} role="region" aria-label={feed === "following" ? "Following videos" : "For You videos"} tabIndex={0}
+  return <div ref={feedRef} role="region" aria-label={feed === "following" ? "Following posts" : "For You posts"} tabIndex={0}
     className="h-[calc(100dvh-2rem)] w-full min-w-0 snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-y-contain rounded-xl focus-visible:outline-2 focus-visible:outline-ring">
-    {query.isPending && <p role="status" className="p-12 text-center text-muted-foreground">Loading videos...</p>}
-    {query.isError && !query.data && <div role="alert" className="space-y-3 p-12 text-center"><p>Unable to load videos.</p><button onClick={() => void query.refetch()} className="text-primary underline">Try again</button></div>}
-    {query.data && !videos.length && <p className="p-12 text-center text-muted-foreground">{feed === "following" ? "No videos yet. Follow creators to see their published videos here." : "No published videos yet."}</p>}
-    {videos.map(video => <section key={video.id} data-video-id={video.id} aria-label={`Video by ${video.author.username}`}
+    {query.isPending && <p role="status" className="p-12 text-center text-muted-foreground">Loading posts...</p>}
+    {query.isError && !query.data && <div role="alert" className="space-y-3 p-12 text-center"><p>Unable to load posts.</p><button onClick={() => void query.refetch()} className="text-primary underline">Try again</button></div>}
+    {query.data && !videos.length && <p className="p-12 text-center text-muted-foreground">{feed === "following" ? "No posts yet. Follow creators to see their published posts here." : "No published posts yet."}</p>}
+    {videos.map(video => <section key={video.id} data-video-id={video.id} aria-label={`${video.mediaType === "image" ? "Photo" : "Video"} by ${video.author.username}`}
       className="relative flex h-full min-h-0 min-w-0 snap-start snap-always flex-col items-center px-2 py-3 sm:px-4">
-      <VideoPlayer postId={video.id} src={video.mediaUrl} author={video.author} isActive={video.id === activeVideoId} title={`Video by ${video.author.username}`} volume={volume} muted={muted}
+      <VideoPlayer postId={video.id} mediaType={video.mediaType} src={video.mediaUrl} author={video.author} isActive={video.id === activeVideoId} title={`${video.mediaType === "image" ? "Photo" : "Video"} by ${video.author.username}`} volume={volume} muted={muted}
         onVolumeChange={(nextVolume, nextMuted) => { setVolume(nextVolume); setMuted(nextMuted); }}
         info={{ username: video.author.username, description: video.caption, time: new Date(video.createdAt).toLocaleDateString("en-GB", { timeZone: "Asia/Ho_Chi_Minh" }) }} />
     </section>)}
     {hasNextPage && <div ref={loadMoreRef} className="flex min-h-24 snap-start items-center justify-center p-6">
-      {isFetchNextPageError ? <div role="alert" className="text-center"><p>Unable to load more videos.</p><button disabled={isFetching} onClick={() => void fetchNextPage()} className="text-primary underline">Try again</button></div>
+      {isFetchNextPageError ? <div role="alert" className="text-center"><p>Unable to load more posts.</p><button disabled={isFetching} onClick={() => void fetchNextPage()} className="text-primary underline">Try again</button></div>
         : <button disabled={isFetching} onClick={() => void fetchNextPage()} className="text-primary">{query.isFetchingNextPage ? "Loading..." : "Load more"}</button>}
     </div>}
   </div>;

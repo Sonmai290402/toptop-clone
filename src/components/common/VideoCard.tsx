@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play, VideoOff } from "lucide-react";
+import Image from "next/image";
+import { ImageOff, Pause, Play, VideoOff } from "lucide-react";
 import type { VideoData } from "@/types/video.types";
 
-export type VideoPreviewData = Omit<VideoData, "isPinned" | "viewCount"> & Partial<Pick<VideoData, "isPinned" | "viewCount">>;
+export type VideoPreviewData = Omit<VideoData, "isPinned" | "viewCount"> & Partial<Pick<VideoData, "isPinned" | "viewCount">> & { mediaType: "video" | "image" };
 type VideoCardProps = { video: VideoPreviewData };
 
 // const countFormatter = new Intl.NumberFormat("en", {
@@ -36,6 +37,23 @@ export default function VideoCard({ video }: VideoCardProps) {
     if (!player) return;
     player.pause();
     if (player.readyState >= 1) player.currentTime = 0;
+  }
+
+  if (video.mediaType === "image") {
+    return <article className="group relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted">
+      {hasError ? <div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-sm text-muted-foreground">
+        <ImageOff className="size-6" aria-hidden="true" />
+        Unable to load image
+      </div> : <Image
+        src={video.videoUrl}
+        alt={video.description || "Photo post"}
+        fill
+        unoptimized
+        sizes="(min-width: 1536px) 17vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+        onError={() => setHasError(true)}
+        className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+      />}
+    </article>;
   }
 
   return (

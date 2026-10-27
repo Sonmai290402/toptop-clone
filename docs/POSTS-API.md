@@ -2,13 +2,15 @@
 
 ## For You and Following
 
-Apply `20261026000400_media_video_feed.sql` before using the real feeds.
-`GET /api/v1/posts/feed?feed=for-you&limit=10&offset=0` returns published videos from all creators, newest first. For You currently uses chronological ordering, not personalized recommendations.
-Use `feed=following` for published videos by accounts the current user follows. Following requires a valid session (401 otherwise); its database function also enforces authentication. Images and pending uploads are excluded before pagination. `limit` is 1–50, `offset` is 0–100000.
+Apply migrations through `20261027000100_mixed_media_feed.sql` before using the mixed feeds (`npx supabase db push` for a linked project). This adds `media_post_feed`; the previous video-only RPC remains available for compatibility.
+`GET /api/v1/posts/feed?feed=for-you&limit=10&offset=0` returns published videos and images from `media_posts`, newest first. For You currently uses chronological ordering, not personalized recommendations.
+Use `feed=following` for published posts by accounts the current user follows. Following requires a valid session (401 otherwise); its database function also enforces authentication. Pending uploads are excluded before pagination. `limit` is 1–50, `offset` is 0–100000.
 
 The response uses `{ data: [...], pagination: { hasMore, nextOffset } }`. Each post includes `author: { id, username, displayName, avatarUrl }`. `GET /api/v1/posts/:postId` also includes this author information.
 
-Both feed pages use real uploaded videos, author profiles, captions and dates, auto-play the visible video and load more on scroll. Shared volume and the existing player layout are preserved. Comments, likes, saves and follows now use real post/user relationships; see [Post interactions](./POST-INTERACTIONS.md). The legacy `/videos` API remains separate.
+Both feed pages use `mediaType` (`video` or `image`) to render each post, with author profiles, captions and dates. Images fit their natural aspect ratio without video controls; only the visible video auto-plays. Both types support comments, likes, saves and follows; see [Post interactions](./POST-INTERACTIONS.md). Shared volume, scrolling and the existing player layout are preserved. The legacy `/videos` API remains separate.
+
+`ExpandableCaption` in `src/components/common/ExpandableCaption.tsx` is shared by Upload cards and the feed player. Pass `text` and optionally `lines` (default 2). The component shows See all/See less only when the caption exceeds the collapsed height, preserves line breaks and wraps long words. Expanded content scrolls within a bounded height; `expandedClassName` customizes this limit. Short captions have no toggle. Upload's editing textarea is unchanged.
 
 Apply `supabase/migrations/20261026000200_public_posts.sql` after the upload migration, using `npx supabase db push` for a linked project or the SQL Editor. This adds read access for published posts and indexes; existing posts are preserved. Unpublished uploads remain visible only to their owner at the database level and are excluded from every endpoint below, including `/me/posts`.
 
@@ -41,4 +43,4 @@ The detail endpoint returns `{ "data": { ...post } }`. Lists use creation time p
 
 List endpoints also accept optional `mediaType=video` or `mediaType=image`; filtering happens before pagination.
 
-Profile resolves the route username to a profile UUID, then loads that profile's videos with `mediaType=video` through TanStack Query. It reuses the original VideoGrid/VideoCard layout with muted hover previews and click-to-play, without native controls or visible captions. Latest/oldest ordering and load-more remain available. Saved/Liked tabs now load private video collections on the current user's own Profile. Popular sorting, pin badges and view counts remain commented out. Upload completion invalidates post queries. Profile pages still require login; published post read APIs are public.
+Profile resolves the route username to a profile UUID, then loads that profile's published images and videos without a mediaType filter through TanStack Query. The Posts tab retains the original 3:4 grid cards, without native controls or visible captions. Images use static thumbnails; videos keep muted hover previews and click-to-play. Latest/oldest ordering and load-more apply to both types. Saved/Liked tabs load private mixed-media collections on the current user's own Profile after applying `20261027000200_mixed_profile_collections.sql`. Popular sorting, pin badges and view counts remain commented out. Upload completion invalidates post queries. Profile pages still require login; published post read APIs are public.
