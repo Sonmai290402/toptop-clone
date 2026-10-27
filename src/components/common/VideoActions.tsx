@@ -61,7 +61,7 @@ export default function VideoActions({
             </AvatarFallback>
           </Avatar>
         </Link>
-        {user?.id !== author.id && (
+        {user?.id !== author.id && !state.data?.isFollowing && (
           <Button
             aria-label={
               state.data?.isFollowing ? "Unfollow user" : "Follow user"
@@ -77,11 +77,7 @@ export default function VideoActions({
             }}
             className="absolute bottom-0 right-1/2 h-5 w-5 translate-x-1/2 translate-y-1/2 rounded-full p-0"
           >
-            {state.data?.isFollowing ? (
-              <Check className="size-3" />
-            ) : (
-              <Plus className="size-3" />
-            )}
+            <Plus className="size-3" />
           </Button>
         )}
       </div>
