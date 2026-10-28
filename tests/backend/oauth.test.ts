@@ -22,7 +22,7 @@ test("Google OAuth PKCE, callbacks and profile synchronization", async (t) => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://supabase.example.test";
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_test_only";
   process.env.APP_URL = origin;
-  let profile = { username, display_name: username, avatar_url: null as string | null };
+  let profile = { username, display_name: username, avatar_url: null as string | null, role: "user" };
   let challenge = "";
   let tokenCalls = 0;
   let updates = 0;
@@ -114,7 +114,7 @@ test("Google OAuth PKCE, callbacks and profile synchronization", async (t) => {
       assert.equal(identity.role, "user");
     });
     await t.test("repeat sign-in preserves edited profiles and JSON omits refresh token", async () => {
-      profile = { username: "custom_username", display_name: "My edited name", avatar_url: "https://example.com/custom.png" };
+      profile = { username: "custom_username", display_name: "My edited name", avatar_url: "https://example.com/custom.png", role: "user" };
       const response = await finish("flow=google&code=valid-code", await start(), "application/json");
       assert.equal(response.status, 200);
       const body = await response.json();

@@ -15,6 +15,7 @@ import ExpandableCaption from "@/components/common/ExpandableCaption";
 import MediaPlayback from "@/components/common/MediaPlayback";
 import SoundPicker from "@/components/common/SoundPicker";
 import type { PostSound } from "@/lib/sounds";
+import { usePlaybackVolume } from "@/hooks/usePlaybackVolume";
 
 export default function Upload() {
   const { user } = useAuth();
@@ -24,8 +25,7 @@ export default function Upload() {
   const [caption, setCaption] = useState("");
   const [sound, setSound] = useState<PostSound | null>(null);
   const [mediaDuration, setMediaDuration] = useState(0);
-  const [previewVolume, setPreviewVolume] = useState(1);
-  const [previewMuted, setPreviewMuted] = useState(false);
+  const { volume: previewVolume, muted: previewMuted, ready, setPlaybackVolume } = usePlaybackVolume();
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
@@ -140,8 +140,8 @@ export default function Upload() {
           {file && preview && (
             <div className="relative flex h-72 justify-center overflow-hidden rounded-xl bg-black">
               <MediaPlayback key={`${preview}:${sound?.soundId ?? "none"}:${sound?.startMs}:${sound?.durationMs}`} src={preview} mediaType={file.type.startsWith("video/") ? "video" : "image"}
-                title="Selected media preview" soundtrack={sound} active={!busy} volume={previewVolume} muted={previewMuted}
-                onVolumeChange={(volume, muted) => { setPreviewVolume(volume); setPreviewMuted(muted); }}
+                title="Selected media preview" soundtrack={sound} active={ready && !busy} volume={previewVolume} muted={previewMuted}
+                onVolumeChange={setPlaybackVolume}
                 onDuration={seconds => setMediaDuration(Number.isFinite(seconds) ? seconds : 0)} />
             </div>
           )}
@@ -232,7 +232,7 @@ export default function Upload() {
             >
               <div className="relative h-64 bg-black">
                 <MediaPlayback src={post.mediaUrl} mediaType={post.mediaType} title={post.caption || "Uploaded post"} soundtrack={post.soundtrack}
-                  volume={previewVolume} muted={previewMuted} onVolumeChange={(volume, muted) => { setPreviewVolume(volume); setPreviewMuted(muted); }} />
+                  active={ready} volume={previewVolume} muted={previewMuted} onVolumeChange={setPlaybackVolume} />
               </div>
               <ExpandableCaption text={post.caption || "No caption"} className="p-3" buttonClassName="text-primary" />
             </article>

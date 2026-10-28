@@ -55,25 +55,63 @@ export default function VideoPlayer({
               aspectRatio: "var(--video-aspect-ratio, 0.5625)",
             }}
           >
-            <MediaPlayback src={src} mediaType={mediaType} title={title} soundtrack={soundtrack} active={isActive} autoPlay
-              volume={volume} muted={muted} onVolumeChange={onVolumeChange}
-              onDimensions={(width, height) => { if (width > 0 && height > 0) frameRef.current?.style.setProperty("--video-aspect-ratio", String(width / height)); }} />
-            <div className={`absolute left-0 w-full overflow-y-auto overscroll-contain bg-gradient-to-t from-black/70 to-transparent p-3 text-white transition-[bottom] duration-400 ${soundtrack ? "bottom-[88px] max-h-[calc(100%-88px)]" : mediaType === "video" ? "bottom-0 max-h-full group-hover/video:bottom-[66px] group-hover/video:max-h-[calc(100%-66px)] group-hover/video:bg-black/50" : "bottom-0 max-h-full"}`}>
+            <MediaPlayback
+              src={src}
+              mediaType={mediaType}
+              title={title}
+              soundtrack={soundtrack}
+              active={isActive}
+              autoPlay
+              volume={volume}
+              muted={muted}
+              onVolumeChange={onVolumeChange}
+              onDimensions={(width, height) => {
+                if (width > 0 && height > 0)
+                  frameRef.current?.style.setProperty(
+                    "--video-aspect-ratio",
+                    String(width / height),
+                  );
+              }}
+            />
+            <div
+              className={`absolute left-0 w-full overflow-y-auto overscroll-contain bg-gradient-to-t from-black/70 to-transparent p-3 text-white transition-[bottom] duration-400 ${soundtrack ? "bottom-[88px] max-h-[calc(100%-88px)]" : mediaType === "video" ? "bottom-0 max-h-full group-hover/video:bottom-[66px] group-hover/video:max-h-[calc(100%-66px)] group-hover/video:bg-black/50" : "bottom-0 max-h-full"}`}
+            >
               <div className="flex min-w-0 items-center">
-                <Link href={`/@${encodeURIComponent(info.username)}`} className="truncate font-semibold hover:underline">{info.username}</Link>
+                <Link
+                  href={`/@${encodeURIComponent(info.username)}`}
+                  className="truncate font-semibold hover:underline"
+                >
+                  {info.username}
+                </Link>
                 {info.time && (
                   <p className="ml-2 shrink-0 text-sm text-muted-foreground">
                     {info.time}
                   </p>
                 )}
               </div>
-              <ExpandableCaption text={info.description} expandedClassName="max-h-[min(30dvh,10rem)]" buttonClassName="text-white" />
-              {soundtrack && <p className="mt-1 truncate text-xs" title={`${soundtrack.sound.title} — ${soundtrack.sound.artist}`}>♫ {soundtrack.sound.title} — {soundtrack.sound.artist}</p>}
+              <ExpandableCaption
+                text={info.description}
+                expandedClassName="max-h-[min(30dvh,10rem)]"
+                buttonClassName="text-white"
+              />
+              {soundtrack && (
+                <p
+                  className="mt-1 truncate text-xs"
+                  title={`${soundtrack.sound.title} — ${soundtrack.sound.artist}`}
+                >
+                  ♫ {soundtrack.sound.title} — {soundtrack.sound.artist}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        <VideoActions key={postId} postId={postId} author={author} isActive={isActive} />
+        <VideoActions
+          key={postId}
+          postId={postId}
+          author={author}
+          isActive={isActive}
+        />
       </div>
 
       <Comments key={postId} postId={postId} isActive={isActive} />

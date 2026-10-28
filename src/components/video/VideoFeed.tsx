@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import VideoPlayer from "./VideoPlayer";
 import { useVideoFeed, type FeedType } from "@/hooks/queries/useVideoFeed";
+import { usePlaybackVolume } from "@/hooks/usePlaybackVolume";
 
 export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
   const query = useVideoFeed(feed);
@@ -10,8 +11,7 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-  const [volume, setVolume] = useState(1);
-  const [muted, setMuted] = useState(true);
+  const { volume, muted, ready, setPlaybackVolume } = usePlaybackVolume();
   const { fetchNextPage, hasNextPage, isFetching, isFetchNextPageError } = query;
 
   useEffect(() => {
@@ -46,8 +46,8 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
     {query.data && !videos.length && <p className="p-12 text-center text-muted-foreground">{feed === "following" ? "No posts yet. Follow creators to see their published posts here." : "No published posts yet."}</p>}
     {videos.map(video => <section key={video.id} data-video-id={video.id} aria-label={`${video.mediaType === "image" ? "Photo" : "Video"} by ${video.author.username}`}
       className="relative flex h-full min-h-0 min-w-0 snap-start snap-always flex-col items-center px-2 py-3 sm:px-4">
-      <VideoPlayer postId={video.id} mediaType={video.mediaType} src={video.mediaUrl} soundtrack={video.soundtrack} author={video.author} isActive={video.id === activeVideoId} title={`${video.mediaType === "image" ? "Photo" : "Video"} by ${video.author.username}`} volume={volume} muted={muted}
-        onVolumeChange={(nextVolume, nextMuted) => { setVolume(nextVolume); setMuted(nextMuted); }}
+      <VideoPlayer postId={video.id} mediaType={video.mediaType} src={video.mediaUrl} soundtrack={video.soundtrack} author={video.author} isActive={ready && video.id === activeVideoId} title={`${video.mediaType === "image" ? "Photo" : "Video"} by ${video.author.username}`} volume={volume} muted={muted}
+        onVolumeChange={setPlaybackVolume}
         info={{ username: video.author.username, description: video.caption, time: new Date(video.createdAt).toLocaleDateString("en-GB", { timeZone: "Asia/Ho_Chi_Minh" }) }} />
     </section>)}
     {hasNextPage && <div ref={loadMoreRef} className="flex min-h-24 snap-start items-center justify-center p-6">

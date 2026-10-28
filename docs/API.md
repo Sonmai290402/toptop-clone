@@ -297,14 +297,13 @@ JSON `{ "password": "MatKhauMoiDu8KyTu" }`, cần cookie đăng nhập/recovery 
 Mật khẩu 8–128 ký tự. Trả **200** `{data:{message}}`; chưa xác thực trả **401**.
 Endpoint này cũng cho phép người đang đăng nhập đổi mật khẩu của chính mình.
 
-### Role ứng dụng
+### User roles
 
-Role lấy từ `auth.users.raw_app_meta_data.app_role`, chỉ giá trị `admin` được xem là admin;
-thiếu/giá trị khác mặc định `user`. Không dùng `user_metadata.role` hoặc JWT database role.
-Form đăng ký không nhận role. Chỉ SQL Editor/server có quyền quản trị được gán admin.
-Không có endpoint tự đổi role hay quyền admin vượt qua ownership trong API hiện tại.
-Helper `requireRole` dành cho các endpoint quản trị khi xây dựng sau; không thay thế RLS.
-Thiếu code: 400. Không gọi API này như API đăng nhập thông thường.
+Roles are stored in `public.profiles.role`, a PostgreSQL `user_role` enum (`admin`, `user`).
+TypeScript uses the shared `UserRole` enum from `src/types/role.types.ts`.
+New profiles default to `user`; signup and profile-update APIs reject role input.
+Admin page/API checks read the current profile role, and database policies use `is_admin()`.
+Project owners can edit the role in Supabase Table Editor; see [Admin setup](./ADMIN.md).
 
 ## 5. Video và profile API
 

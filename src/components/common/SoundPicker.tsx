@@ -24,7 +24,7 @@ export default function SoundPicker({ value, onChange, mediaType, mediaDuration,
   });
   const durationLimit = mediaType === "video" ? Math.floor(mediaDuration * 1000) : 30000;
   function select(sound: Sound) {
-    onChange({ sound, soundId: sound.id, startMs: 0, durationMs: Math.min(sound.durationMs, durationLimit, 60000), musicVolume: 0.7, originalVolume: mediaType === "video" ? 1 : 0 });
+    onChange({ sound, soundId: sound.id, startMs: 0, durationMs: Math.min(sound.durationMs, durationLimit), musicVolume: 0.7, originalVolume: mediaType === "video" ? 1 : 0 });
     setOpen(false); setPreview(null);
   }
   const tracks = query.data?.pages.flatMap(page => page.data) ?? [];
@@ -41,7 +41,7 @@ export default function SoundPicker({ value, onChange, mediaType, mediaDuration,
         <input aria-label="Sound start" type="range" min={0} max={Math.max(0, value.sound.durationMs - value.durationMs)} step={100} value={value.startMs} onChange={event => onChange({ ...value, startMs: Number(event.target.value) })} className="mt-2 w-full accent-primary" />
       </label>
       <label className="block text-sm">Duration: {(value.durationMs / 1000).toFixed(1)}s
-        <input aria-label="Sound duration" type="range" min={1000} max={Math.min(60000, durationLimit, value.sound.durationMs - value.startMs)} step={100} value={value.durationMs} onChange={event => onChange({ ...value, durationMs: Number(event.target.value) })} className="mt-2 w-full accent-primary" />
+        <input aria-label="Sound duration" type="range" min={1000} max={Math.min(durationLimit, value.sound.durationMs - value.startMs)} step={100} value={value.durationMs} onChange={event => onChange({ ...value, durationMs: Number(event.target.value) })} className="mt-2 w-full accent-primary" />
       </label>
       <label className="block text-sm">Music volume: {Math.round(value.musicVolume * 100)}%
         <input aria-label="Music volume" type="range" min={0} max={1} step={0.05} value={value.musicVolume} onChange={event => onChange({ ...value, musicVolume: Number(event.target.value) })} className="mt-2 w-full accent-primary" />
@@ -49,7 +49,7 @@ export default function SoundPicker({ value, onChange, mediaType, mediaDuration,
       {mediaType === "video" && <label className="block text-sm">Original sound: {Math.round(value.originalVolume * 100)}%
         <input aria-label="Original sound volume" type="range" min={0} max={1} step={0.05} value={value.originalVolume} onChange={event => onChange({ ...value, originalVolume: Number(event.target.value) })} className="mt-2 w-full accent-primary" />
       </label>}
-      <p className="text-xs text-muted-foreground">Press Play in the preview to hear the mix. {mediaType === "image" ? "The photo loops the selected segment." : "Music starts with the video and stops when the selected segment ends."}</p>
+      <p className="text-xs text-muted-foreground">Press Play in the preview to hear the mix. {mediaType === "image" ? "The photo loops the selected segment (up to 30 seconds)." : "Music defaults to the full video length or the remaining track length, whichever is shorter."}</p>
     </>}
     <Dialog.Root open={open} onOpenChange={next => { setOpen(next); if (!next) setPreview(null); }}>
       <Dialog.Portal>
@@ -82,3 +82,4 @@ export default function SoundPicker({ value, onChange, mediaType, mediaDuration,
     </Dialog.Root>
   </fieldset>;
 }
+

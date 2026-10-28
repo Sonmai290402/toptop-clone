@@ -1,18 +1,20 @@
 import "server-only";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { AuthUser, UserRole } from "@/types/auth.types";
+import type { AuthUser } from "@/types/auth.types";
+import { UserRole } from "@/types/role.types";
 import { ApiError, databaseError } from "@/server/shared/errors";
 
-export function getUserRole(user: User): UserRole {
-  // app_metadata can only be changed by trusted admin/service-role operations.
-  // Never read authorization from user_metadata or the JWT's database role.
-  return user.app_metadata?.app_role === "admin" ? "admin" : "user";
+export async function getUserRole(db: SupabaseClient, user: User): Promise<UserRole> {
+  const { data, error } = await db.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (error) databaseError(error);
+  if (!data) throw new ApiError(403, "FORBIDDEN", "A user profile is required.");
+  return z.enum(UserRole).parse(data.role);
 }
 
-export function requireRole(user: User | null, role: UserRole) {
+export async function requireRole(db: SupabaseClient, user: User | null, role: UserRole) {
   if (!user) throw new ApiError(401, "UNAUTHENTICATED", "Please sign in.");
-  if (getUserRole(user) !== role) throw new ApiError(403, "FORBIDDEN", "You do not have permission to perform this action.");
+  if (await getUserRole(db, user) !== role) throw new ApiError(403, "FORBIDDEN", "You do not have permission to perform this action.");
 }
 
 export function toAuthUser(user: User): AuthUser {
@@ -23,14 +25,14 @@ export function toAuthUser(user: User): AuthUser {
     username: typeof metadata.username === "string" ? metadata.username : `user_${user.id.replaceAll("-", "").slice(0, 24)}`,
     displayName: [metadata.display_name, metadata.full_name, metadata.name].find(value => typeof value === "string" && value.trim())?.trim().slice(0, 80) ?? "User",
     avatarUrl: [metadata.avatar_url, metadata.picture].find(value => typeof value === "string" && value.startsWith("https://")) ?? null,
-    role: getUserRole(user),
+    role: UserRole.USER,
   };
 }
 
-const authProfile = z.object({ username: z.string(), display_name: z.string(), avatar_url: z.string().nullable() });
+const authProfile = z.object({ username: z.string(), display_name: z.string(), avatar_url: z.string().nullable(), role: z.enum(UserRole) });
 
 export async function getAuthUser(db: SupabaseClient, user: User, syncGoogleProfile = false): Promise<AuthUser> {
-  const result = await db.from("profiles").select("username, display_name, avatar_url").eq("id", user.id).maybeSingle();
+  const result = await db.from("profiles").select("username, display_name, avatar_url, role").eq("id", user.id).maybeSingle();
   if (result.error) databaseError(result.error);
   if (!result.data) throw new ApiError(409, "PROFILE_NOT_READY", "Your profile is not ready. Please try signing in again.");
   const profile = authProfile.parse(result.data);
@@ -58,5 +60,5 @@ export async function getAuthUser(db: SupabaseClient, user: User, syncGoogleProf
     profile.username = z.string().parse(username.data);
   }
 
-  return { ...identity, username: profile.username, displayName: profile.display_name, avatarUrl: profile.avatar_url };
+  return { ...identity, username: profile.username, displayName: profile.display_name, avatarUrl: profile.avatar_url, role: profile.role };
 }

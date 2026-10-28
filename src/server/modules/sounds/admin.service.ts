@@ -7,7 +7,7 @@ import { soundDto, soundListSchema } from "./sound.service";
 
 export async function listAdminSounds(db: SupabaseClient, input: z.infer<typeof soundListSchema>) {
   // Check the database role too, so a revoked admin's cached token cannot grant access.
-  const permission = await db.rpc("is_app_admin");
+  const permission = await db.rpc("is_admin");
   if (permission.error) databaseError(permission.error);
   if (!permission.data) throw new ApiError(403, "FORBIDDEN", "Admin access is required.");
   let query = db.from("sounds").select("id,title,artist,storage_path,duration_ms,is_active,created_at");

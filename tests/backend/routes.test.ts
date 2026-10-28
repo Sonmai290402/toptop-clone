@@ -106,7 +106,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     }
     if (url.pathname.startsWith("/storage/v1/object/upload/sign/posts/")) return Response.json({ url: `/object/upload/sign/posts/${mediaRow.storage_path}?token=test-signed-token` });
     if (url.pathname === "/rest/v1/rpc/publish_media_post_with_sound") return Response.json({ ...mediaRow, sound_id: body.p_sound_id, sound_start_ms: body.p_start_ms, sound_duration_ms: body.p_duration_ms, music_volume: body.p_music_volume, original_volume: body.p_original_volume });
-    if (url.pathname === "/rest/v1/rpc/is_app_admin") return Response.json(adminRole);
+    if (url.pathname === "/rest/v1/rpc/is_admin") return Response.json(adminRole);
     if (url.pathname === "/rest/v1/sound_uploads") {
       assert.equal(body.user_id, userId);
       assert.equal(body.mime_type, "audio/mpeg");
@@ -121,7 +121,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       return Response.json([row]);
     }
     if (["/auth/v1/logout", "/auth/v1/recover", "/auth/v1/resend"].includes(url.pathname)) return Response.json({});
-    if (url.pathname === "/rest/v1/profiles") return Response.json(missingProfile ? null : { id: userId, username: "alice", display_name: "Alice", avatar_url: null });
+    if (url.pathname === "/rest/v1/profiles") return Response.json(missingProfile ? null : { id: userId, username: "alice", display_name: "Alice", avatar_url: null, role: adminRole ? "admin" : "user" });
     if (url.pathname === "/rest/v1/rpc/api_profile") return Response.json(missingProfile ? null : {
       ...author, bio: "Hello", createdAt: "2026-10-23T00:00:00Z",
       followerCount: 12, followingCount: 5, likeCount: 40,
@@ -159,7 +159,7 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       assert.equal((await adminSounds(request("admin/sounds"))).status, 403);
       assert.equal((await adminSoundUpload(request("admin/sounds/uploads", "POST", { mimeType: "audio/mpeg", size: 100 }))).status, 403);
       assert.equal((await adminSoundComplete(request(`admin/sounds/uploads/${videoId}/complete`, "POST", { title: "Test", artist: "Artist", durationMs: 1000 }), ctx)).status, 403);
-      assert.ok(requests.slice(before).every(item => item.path === "/auth/v1/user"), "Unauthorized callers never reach database or Storage writes");
+      assert.ok(requests.slice(before).every(item => ["/auth/v1/user", "/rest/v1/profiles"].includes(item.path)), "Unauthorized callers only read identity and role");
       adminRole = true;
       try {
         assert.equal((await adminSounds(request("admin/sounds"))).status, 200);

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserRole } from "@/types/role.types";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Music2, UploadCloud } from "lucide-react";
@@ -44,7 +45,7 @@ export default function AdminSounds() {
     queryFn: ({ pageParam, signal }) => getAdminSounds(pageParam, term, signal),
     initialPageParam: 0,
     getNextPageParam: page => page.pagination.nextOffset ?? undefined,
-    enabled: user?.role === "admin",
+    enabled: user?.role === UserRole.ADMIN,
   });
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
   useEffect(() => () => { controller.current?.abort(); metadataCleanup.current?.(); }, []);

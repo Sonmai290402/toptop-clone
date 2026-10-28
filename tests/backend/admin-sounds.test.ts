@@ -15,7 +15,7 @@ test("admin sound uploads enforce role, ownership, actual file metadata and atom
       create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid$$;
       create table auth.users(id uuid primary key,raw_app_meta_data jsonb,raw_user_meta_data jsonb);
       grant usage on schema auth,storage to authenticated,anon;
-      create table public.profiles(id uuid primary key,username text,display_name text,avatar_url text);
+      create table public.profiles(id uuid primary key,username text,display_name text,avatar_url text,bio text);
       create table public.follows(follower_id uuid,following_id uuid);
       create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
       create table storage.objects(bucket_id text,name text,metadata jsonb);
@@ -27,6 +27,18 @@ test("admin sound uploads enforce role, ownership, actual file metadata and atom
     }
     await db.query("insert into auth.users values ($1,'{\"app_role\":\"admin\"}','{}'),($2,'{\"app_role\":\"admin\"}','{}'),($3,'{\"app_role\":\"user\"}','{\"app_role\":\"admin\"}')", [admin, secondAdmin, regular]);
     await db.query("insert into public.profiles(id) values ($1),($2),($3)", [admin, secondAdmin, regular]);
+    await db.exec("grant update(display_name,avatar_url) on public.profiles to authenticated");
+    await db.exec(await readFile(new URL("../../supabase/migrations/20261028000100_profile_roles.sql", import.meta.url), "utf8"));
+    await db.exec(await readFile(new URL("../../supabase/migrations/20261028000200_restore_profile_edit_permissions.sql", import.meta.url), "utf8"));
+    assert.equal((await db.query<{ role: string }>("select role from public.profiles where id=$1", [admin])).rows[0].role, "admin", "Existing admins are migrated");
+    assert.equal((await db.query<{ role: string }>("select role from public.profiles where id=$1", [regular])).rows[0].role, "user", "User metadata cannot grant admin");
+    assert.equal(Object.prototype.hasOwnProperty.call((await db.query<{ metadata: object }>("select raw_app_meta_data as metadata from auth.users where id=$1", [admin])).rows[0].metadata, "app_role"), false);
+    const grants = (await db.query<{ editable_name: boolean; editable_role: boolean }>("select has_column_privilege('authenticated','public.profiles','display_name','UPDATE') as editable_name, has_column_privilege('authenticated','public.profiles','role','UPDATE') as editable_role")).rows[0];
+    assert.equal(grants.editable_name, true);
+    assert.equal(grants.editable_role, false);
+    const fresh = (await db.query<{ role: string }>("insert into public.profiles(id) values ('00000000-0000-4000-8000-000000000004') returning role")).rows[0];
+    assert.equal(fresh.role, "user");
+    await assert.rejects(db.query("update public.profiles set role='superadmin' where id=$1", [regular]), /invalid input value for enum/);
     async function role(id: string | null) {
       await db.exec("reset role");
       await db.query("select set_config('request.jwt.claim.sub',$1,false)", [id ?? ""]);
@@ -36,7 +48,8 @@ test("admin sound uploads enforce role, ownership, actual file metadata and atom
     await role(null);
     await assert.rejects(create(admin), /permission denied/);
     await role(regular);
-    assert.equal((await db.query<{ allowed: boolean }>("select public.is_app_admin() as allowed")).rows[0].allowed, false);
+    assert.equal((await db.query<{ allowed: boolean }>("select public.is_admin() as allowed")).rows[0].allowed, false);
+    await assert.rejects(db.query("update public.profiles set role='admin' where id=$1", [regular]), /permission denied/);
     await assert.rejects(create(regular), /row-level security/);
     await assert.rejects(db.query("insert into storage.objects values ('sounds','bad.mp3','{}')"), /row-level security/);
     await assert.rejects(db.query("select public.publish_admin_sound($1,'Sound','Artist',1000)", [admin]), /Admin access required/);
@@ -70,7 +83,7 @@ test("admin sound uploads enforce role, ownership, actual file metadata and atom
     await role(admin);
     assert.equal((await db.query("select * from public.sounds")).rows.length, 1, "Admins see inactive sounds");
     await db.exec("reset role");
-    await db.query("update auth.users set raw_app_meta_data='{\"app_role\":\"user\"}' where id=$1", [admin]);
+    await db.query("update public.profiles set role='user' where id=$1", [admin]);
     await role(admin);
     assert.equal((await db.query("select * from public.sounds")).rows.length, 0);
     await assert.rejects(create(admin), /row-level security/);

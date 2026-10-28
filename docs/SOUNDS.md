@@ -67,7 +67,7 @@ Authenticated, with the existing Origin requirement. The file upload flow is unc
 }
 ```
 
-Omit `sound` or send null for original media only. Start must be nonnegative; duration must be 1000–60000 ms; start + duration cannot exceed the track's duration. Volumes must be 0–1. Only sound IDs are accepted, never caller-provided audio URLs or metadata. The selected track must be active and its file must exist. The upload must belong to the authenticated user. Invalid selection returns `400 INVALID_SOUND`; an invalid JSON shape returns `400 INVALID_INPUT`. A missing/mismatched uploaded media file returns `400 UPLOAD_INCOMPLETE`.
+Omit `sound` or send null for original media only. Start must be nonnegative; duration must be 1000–3600000 ms for videos or 1000–30000 ms for photos; start + duration cannot exceed the track's duration. Volumes must be 0–1. Only sound IDs are accepted, never caller-provided audio URLs or metadata. The selected track must be active and its file must exist. The upload must belong to the authenticated user. Invalid selection returns `400 INVALID_SOUND`; an invalid JSON shape returns `400 INVALID_INPUT`. A missing/mismatched uploaded media file returns `400 UPLOAD_INCOMPLETE`.
 
 Publishing and saving sound settings occur in one transaction. Retrying a published upload returns its existing caption and selection, without overwriting them. There is no soundtrack editing endpoint in this version.
 
@@ -96,10 +96,11 @@ Sound metadata is fetched once per response page, not once per post.
 
 - This version plays separate media and audio files; it does not generate a mixed downloadable video.
 - Video time is the master clock. Music starts at the selected offset when video time is zero, follows seek/pause/playback rate, pauses during buffering and resynchronizes during playback. When the selected segment ends, music stops while any remaining video continues. Looping the video restarts the music segment.
-- Photo posts loop the selected segment. The Upload UI allows up to 30 seconds for photos and up to 60 seconds for videos, capped by the video and track duration. The backend enforces the general 60-second cap; it does not decode uploaded videos to validate their duration.
+- Photo posts loop the selected segment. The Upload UI allows up to 30 seconds for photos. Videos default to the shorter of the video length and the track length, with no one-minute cap. The backend enforces the 30-second photo limit and the track boundaries (tracks support up to one hour); it does not decode uploaded videos to validate their duration. Playback stops with the video.
 - Viewer volume multiplies both creator volume settings; mute affects both tracks. Music posts use shared playback controls because native video controls only govern the video element.
 - Leaving the active feed item, scrolling a preview out of view, starting another player or hiding the page stops playback. Browser autoplay restrictions can require pressing Play/Enable sound. Broken audio leaves original media viewable with an error message.
 - Profile grid thumbnails remain silent video previews/static images. Full soundtrack playback is in Feed and Upload previews/recent uploads.
 - HTML media element volume behavior depends on the browser/device; some mobile browsers use system volume. Separate-track playback is best-effort synchronization, not sample-accurate mixing. A future processing worker can produce a single mixed file for consistent playback/export.
 
 Main components: `SoundPicker` handles selection and mix settings; `MediaPlayback` coordinates media elements; `VideoPlayer` composes feed metadata and interactions around it.
+

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { User } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { UserRole } from "../../src/types/role.types";
 import { getUserRole, requireRole, toAuthUser } from "../../src/server/modules/auth/authorization";
 import { signUpSchema } from "../../src/server/modules/auth/auth.schema";
 
@@ -10,14 +11,18 @@ const user = {
   aud: "authenticated", created_at: "2026-10-23T00:00:00Z",
 } as User;
 
-test("application roles never trust editable metadata or Supabase database role", () => {
-  assert.equal(getUserRole(user), "user");
-  assert.equal(getUserRole({ ...user, role: "admin" }), "user");
-  assert.equal(toAuthUser(user).role, "user");
-  assert.throws(() => requireRole(user, "admin"), { status: 403 });
-  assert.throws(() => requireRole(null, "admin"), { status: 401 });
-  assert.doesNotThrow(() => requireRole({ ...user, app_metadata: { app_role: "admin" } }, "admin"));
-  assert.equal(getUserRole({ ...user, app_metadata: { app_role: "unknown" } }), "user");
+test("roles come from profiles and never from Auth metadata or the JWT role", async () => {
+  let role = UserRole.USER;
+  const db = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role }, error: null }) }) }) }) } as unknown as SupabaseClient;
+  assert.equal(await getUserRole(db, user), UserRole.USER);
+  assert.equal(await getUserRole(db, { ...user, role: "admin", app_metadata: { app_role: "admin" } }), UserRole.USER);
+  assert.equal(toAuthUser(user).role, UserRole.USER);
+  await assert.rejects(requireRole(db, user, UserRole.ADMIN), { status: 403 });
+  await assert.rejects(requireRole(db, null, UserRole.ADMIN), { status: 401 });
+  role = UserRole.ADMIN;
+  await assert.doesNotReject(requireRole(db, user, UserRole.ADMIN));
+  role = UserRole.USER;
+  await assert.rejects(requireRole(db, user, UserRole.ADMIN), { status: 403 });
 });
 
 test("signup rejects client-supplied roles", () => {

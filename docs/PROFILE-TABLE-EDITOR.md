@@ -89,8 +89,9 @@ unchanged. Do not use a random UUID: the foreign key requires an Auth account.
 ## Other user data
 
 - Email/password/accounts: manage through Supabase Auth, not a new public table.
-- Application role: `raw_app_meta_data.app_role`; see `docs/AUTH.md`. Do not add
-  a publicly writable role column.
+- User role: `public.profiles.role` (`admin` or `user`, default `user`) after migration
+  `20261028000100_profile_roles.sql`. Edit it in Table Editor as the project owner;
+  regular clients cannot change this column. See [Admin setup](./ADMIN.md).
 - Following/follower counts: computed from `public.follows`.
 - Received likes: computed from `public.video_likes` on published videos.
 

@@ -1,4 +1,5 @@
-export type UserRole = "user" | "admin";
+import type { UserRole } from "./role.types";
+export { UserRole } from "./role.types";
 
 export type AuthUser = {
   id: string;

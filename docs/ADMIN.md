@@ -4,18 +4,17 @@ The `/admin` page currently supports adding sounds and viewing/searching the lib
 
 ## Setup
 
-1. Apply migrations through `20261027000400_admin_sound_uploads.sql` using `npx supabase db push` on the intended linked project.
-2. Choose the account to grant admin access in Supabase **Authentication → Users** and copy its UUID.
-3. As the project owner, run the following in Supabase SQL Editor, replacing the placeholder with that account's UUID:
+1. Apply migrations through `20261028000100_profile_roles.sql` using `npx supabase db push` on the intended linked project.
+2. Open Supabase **Table Editor → public → profiles**, locate the user by username or ID, and change the **role** column to `admin`. Save the row. The column uses the PostgreSQL `user_role` enum with values `admin` and `user`.
+3. Alternatively, as the project owner, run this in SQL Editor with the chosen profile UUID:
 
 ```sql
-update auth.users
-set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
-  || '{"app_role":"admin"}'::jsonb
+update public.profiles
+set role = 'admin'::public.user_role
 where id = 'REPLACE_WITH_USER_UUID';
 ```
 
-Do not change the Supabase database role (`authenticated`) or put permissions in `user_metadata`. This implementation does not automatically promote any account. To revoke access, use the same SQL with `"app_role":"user"`.
+Do not change the Supabase Auth database role (`authenticated`) or put permissions in metadata. Existing admin assignments are preserved by the migration; all new profiles default to `user`. Revoke access by changing `profiles.role` back to `user`. Normal users cannot change this column through the API or direct Data API writes.
 
 4. Refresh the app or sign out/in. The account menu shows an **Admin** link only for admins. Open `/admin`.
 5. Select MP3/M4A/Ogg/WAV up to 20 MiB, enter title and artist, check the detected duration and preview, then press **Add sound**. MP3 is recommended for browser compatibility. Duration must be between 1 second and 60 minutes. The track becomes active and available in Upload → Add sound.
@@ -24,10 +23,10 @@ No service-role key needs to be added to Next.js. The app uses the existing auth
 
 ## Access control
 
-- Proxy verifies the authenticated user and trusted `app_metadata.app_role` before serving `/admin` or any nested path. Guests and non-admins redirect to `/`.
+- Proxy verifies the authenticated user and reads the current `profiles.role` before serving `/admin` or any nested path. Guests and non-admins redirect to `/`.
 - The client layout blocks content while checking the session and redirects after logout or role loss.
 - Every admin API verifies authentication (401 for guests) and admin role (403 for regular users) before calling services.
-- Database checks read the current `auth.users.raw_app_meta_data` for `auth.uid()`, not a cached JWT role. Revoking the role blocks new uploads and publication even with an older access token.
+- Database checks use `is_admin()` to read the current `profiles.role` for `auth.uid()`, not a cached JWT role. Revoking the role blocks new uploads and publication even with an older access token.
 - Storage uploads are scoped to a pending upload owned by that admin, with an immutable generated path. Direct writes to arbitrary paths or overwriting published tracks are not granted.
 - Signed URLs already issued are temporary capabilities: role revocation does not revoke an already-issued Storage upload URL. Completion still requires current admin permission. Do not share signed URLs.
 - Public sound reads still exclude inactive tracks. Admin library reads include inactive tracks. Existing public sound files remain public.

@@ -73,25 +73,22 @@ cố định. Lỗi/hết hạn link có trang hướng dẫn, không trả raw 
 SMTP, hạn mức gửi và chính sách bảo mật mật khẩu vẫn do Supabase cấu hình.
 Các thao tác gửi email chịu giới hạn của Supabase; chưa có limiter riêng ở Next.js.
 
-## Role user/admin
+## User roles
 
-Role lưu ở `auth.users.raw_app_meta_data.app_role`, khác với trường database role
-`authenticated`. Migration đặt `user` cho tài khoản chưa có role và tài khoản mới.
-Không có lựa chọn admin trong đăng ký. Client không thể tự sửa app metadata.
-Trước khi chạy migration, backend vẫn coi metadata thiếu role là `user`.
+The shared TypeScript enum `UserRole` is defined in `src/types/role.types.ts`:
+`UserRole.ADMIN = "admin"` and `UserRole.USER = "user"`.
+The database stores the role in `public.profiles.role` using the PostgreSQL
+`user_role` enum. New profiles default to `user`.
 
-Nếu cần gán admin, quản trị viên chạy trong Supabase SQL Editor, thay UUID rõ ràng:
+Apply `20261028000100_profile_roles.sql`, then open Supabase Table Editor,
+select `public.profiles`, locate the account and change its `role` to `admin`
+or `user`. Save and refresh the application to reload the session.
+Existing admin assignments are migrated automatically. Auth metadata is no
+longer used for authorization. Do not change Supabase's `authenticated` role.
 
-```sql
-update auth.users
-set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
-  || '{"app_role":"admin"}'::jsonb
-where id = 'UUID_TAI_KHOAN_CAN_CAP_QUYEN';
-```
-
-Hạ quyền bằng cách đổi `admin` thành `user`. Sau đó refresh trang để đọc session mới.
-Không đổi trường `role` của Supabase thành `admin`, không đặt quyền trong `user_metadata`.
-Chưa cấp admin cho tài khoản nào và chưa xây trang quản trị hay đặc quyền xóa dữ liệu người khác.
+Signup and profile-update APIs reject role input; column privileges prevent
+users from changing role through the Data API. Admin pages, API handlers and
+database policies read the current profile role. See [Admin setup](./ADMIN.md).
 
 ## Kiểm tra
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserRole } from "@/types/role.types";
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export default function AdminGuard({ children }: { children: ReactNode }) {
   const { user, isLoading, error, retrySession } = useAuth();
   const router = useRouter();
-  const allowed = user?.role === "admin";
+  const allowed = user?.role === UserRole.ADMIN;
   useEffect(() => {
     if (!isLoading && !error && !allowed) router.replace("/");
   }, [isLoading, error, allowed, router]);

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserRole } from "@/types/role.types";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { LogIn, LogOut, ChevronsUpDown } from "lucide-react";
@@ -111,7 +112,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
             {t("profile")}
           </Link>
         )}
-        {user.role === "admin" && <Link className="block text-sm hover:text-primary" href="/admin">Admin</Link>}
+        {user.role === UserRole.ADMIN && <Link className="block text-sm hover:text-primary" href="/admin">Admin</Link>}
         <Link
           className="block text-sm hover:text-primary"
           href="/auth/reset-password"

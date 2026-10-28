@@ -3,7 +3,7 @@ import { z } from "zod";
 export const soundSelectionSchema = z.object({
   soundId: z.uuid(),
   startMs: z.number().int().min(0).max(3600000),
-  durationMs: z.number().int().min(1000).max(60000),
+  durationMs: z.number().int().min(1000).max(3600000),
   musicVolume: z.number().min(0).max(1),
   originalVolume: z.number().min(0).max(1),
 }).strict();
@@ -21,3 +21,4 @@ export const postSoundFields = {
   music_volume: z.number().optional(),
   original_volume: z.number().optional(),
 };
+

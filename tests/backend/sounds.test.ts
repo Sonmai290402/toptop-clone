@@ -8,7 +8,8 @@ test("sound selection rejects spoofed URLs and invalid segment or volume", () =>
   const sound = { soundId: "00000000-0000-4000-8000-000000000010", startMs: 1000, durationMs: 5000, musicVolume: 0.7, originalVolume: 0.2 };
   assert.equal(publishSchema.safeParse({ caption: "Music", sound }).success, true);
   assert.equal(publishSchema.safeParse({ caption: "No music" }).success, true);
-  for (const invalid of [{ ...sound, audioUrl: "https://untrusted.test/a.mp3" }, { ...sound, startMs: -1 }, { ...sound, durationMs: 0 }, { ...sound, durationMs: 61000 }, { ...sound, musicVolume: 1.1 }, { ...sound, originalVolume: -1 }]) {
+  assert.equal(publishSchema.safeParse({ caption: "Long video", sound: { ...sound, durationMs: 180000 } }).success, true);
+  for (const invalid of [{ ...sound, audioUrl: "https://untrusted.test/a.mp3" }, { ...sound, startMs: -1 }, { ...sound, durationMs: 0 }, { ...sound, durationMs: 3600001 }, { ...sound, musicVolume: 1.1 }, { ...sound, originalVolume: -1 }]) {
     assert.equal(publishSchema.safeParse({ caption: "", sound: invalid }).success, false);
   }
 });
@@ -32,7 +33,7 @@ test("sounds restrict writes and publish atomically with validated, immutable se
       alter table storage.objects enable row level security;
       grant insert on storage.objects to authenticated;
     `);
-    for (const migration of ["20261026000100_media_uploads.sql", "20261026000200_public_posts.sql", "20261027000300_post_sounds.sql"]) {
+    for (const migration of ["20261026000100_media_uploads.sql", "20261026000200_public_posts.sql", "20261027000300_post_sounds.sql", "20261028000300_sound_segment_limits.sql"]) {
       await db.exec(await readFile(new URL(`../../supabase/migrations/${migration}`, import.meta.url), "utf8"));
     }
     await db.query("insert into public.profiles(id) values ($1),($2)", [owner, other]);
@@ -77,5 +78,21 @@ test("sounds restrict writes and publish atomically with validated, immutable se
     const feed = (await db.query<{ data: { sound_id: string; sound_start_ms: number }[] }>("select public.media_post_feed('for-you',10,0) as data")).rows[0].data;
     assert.equal(feed[0].sound_id, track);
     assert.equal(feed[0].sound_start_ms, 1000);
+    await db.exec("reset role");
+    await db.query("update public.sounds set duration_ms=180000 where id=$1", [track]);
+    await role("authenticated", owner);
+    for (const mime of ["video/mp4", "image/png"]) {
+      const item = (await db.query<{ id: string; storage_path: string }>("insert into public.media_posts(user_id,mime_type,size_bytes) values ($1,$2,100) returning *", [owner, mime])).rows[0];
+      await db.query("insert into storage.objects values ('posts',$1,$2::jsonb)", [item.storage_path, JSON.stringify({ size: 100, mimetype: mime })]);
+      const publishSegment = (duration: number) => db.query<{ duration: number }>("select (public.publish_media_post_with_sound($1,'Long sound',$2,0,$3,1,1)).sound_duration_ms as duration", [item.id, track, duration]);
+      if (mime === "image/png") {
+        await assert.rejects(publishSegment(30001), /invalid segment/);
+        assert.equal((await publishSegment(30000)).rows[0].duration, 30000);
+      } else {
+        await assert.rejects(publishSegment(180001), /invalid segment/);
+        assert.equal((await publishSegment(180000)).rows[0].duration, 180000);
+      }
+    }
   } finally { await db.close(); }
 });
+
