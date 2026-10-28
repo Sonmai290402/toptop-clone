@@ -12,6 +12,7 @@ type Props = {
   soundtrack?: PostSound | null;
   active?: boolean;
   autoPlay?: boolean;
+  getSharedAudio?: () => HTMLAudioElement | null;
   volume: number;
   muted: boolean;
   onVolumeChange: (volume: number, muted: boolean) => void;
@@ -29,6 +30,7 @@ export default function MediaPlayback({
   soundtrack,
   active = true,
   autoPlay = false,
+  getSharedAudio,
   volume,
   muted,
   onVolumeChange,
@@ -82,15 +84,21 @@ export default function MediaPlayback({
       videoRef.current.volume = volume * originalVolume;
       videoRef.current.muted = muted;
     }
-    if (audioRef.current) {
-      audioRef.current.volume = volume * musicVolume;
-      audioRef.current.muted = muted;
+    const audio = getSharedAudio ? (active && audioUrl ? getSharedAudio() : null) : audioRef.current;
+    if (audio) {
+      audio.volume = volume * musicVolume;
+      audio.muted = muted;
     }
-  }, [volume, muted, originalVolume, musicVolume, src, audioUrl]);
+  }, [volume, muted, originalVolume, musicVolume, src, audioUrl, active, getSharedAudio]);
 
   useEffect(() => {
     const video = videoRef.current;
-    const audio = audioRef.current;
+    const audio = getSharedAudio ? (active && audioUrl ? getSharedAudio() : null) : audioRef.current;
+    if (audio && getSharedAudio && audioUrl) {
+      audio.pause();
+      audio.setAttribute("src", audioUrl);
+      audio.load();
+    }
     let disposed = false;
     let buffering = false;
     let requestedPlay = false;
@@ -99,6 +107,7 @@ export default function MediaPlayback({
     let audioPending = false;
     let audioFailed = false;
     let audioBlocked = false;
+    let videoBlocked = false;
     const listeners: (() => void)[] = [];
     function listen(target: EventTarget, event: string, handler: () => void) {
       target.addEventListener(event, handler);
@@ -124,6 +133,8 @@ export default function MediaPlayback({
       void audio
         .play()
         .then(() => {
+          // A previous post's pending play must never pause the next post's audio.
+          if (disposed) return;
           if (
             !allowed() ||
             (video &&
@@ -137,9 +148,9 @@ export default function MediaPlayback({
         })
         .catch((error: DOMException) => {
           if (!disposed && error.name !== "AbortError") {
-            audioBlocked = true;
+            audioBlocked = error.name === "NotAllowedError";
             setNotice(
-              "Sound could not start. Press Play or Enable sound to retry.",
+              audioBlocked ? "Interact with the page once to enable sound." : "Sound could not start. Press Play to retry.",
             );
             if (!video) setPlaying(false);
           }
@@ -189,10 +200,12 @@ export default function MediaPlayback({
       );
       requestedPlay = true;
       audioBlocked = false;
+      videoBlocked = false;
       if (video) {
         if (audio) setAudioTime(start + Math.min(video.currentTime, length));
-        void video.play().catch(() => {
-          if (!disposed) {
+        void video.play().catch((error: DOMException) => {
+          if (!disposed && error.name !== "AbortError") {
+            videoBlocked = error.name === "NotAllowedError";
             setPlaying(false);
             setNotice("Press Play to start playback.");
           }
@@ -284,6 +297,11 @@ export default function MediaPlayback({
       if ((event as CustomEvent).detail !== hostRef.current) pause();
     };
     window.addEventListener("toptop-media-play", otherPlayback);
+    const retryBlockedPlayback = (event: Event) => {
+      if (event.isTrusted && allowed() && (audioBlocked || videoBlocked)) play();
+    };
+    document.addEventListener("click", retryBlockedPlayback);
+    document.addEventListener("keydown", retryBlockedPlayback);
     // Upload previews and recent uploads also stop when scrolled out of view.
     const observer = new IntersectionObserver((entries) => {
       inView = entries[0]?.isIntersecting ?? true;
@@ -306,11 +324,13 @@ export default function MediaPlayback({
       observer.disconnect();
       clearInterval(interval);
       window.removeEventListener("toptop-media-play", otherPlayback);
+      document.removeEventListener("click", retryBlockedPlayback);
+      document.removeEventListener("keydown", retryBlockedPlayback);
       listeners.forEach((remove) => remove());
       video?.pause();
       audio?.pause();
     };
-  }, [src, mediaType, audioUrl, start, length, active, autoPlay]);
+  }, [src, mediaType, audioUrl, start, length, active, autoPlay, getSharedAudio]);
 
   const total = mediaType === "video" ? duration : length;
   const hasCustomControls = !!soundtrack;
@@ -356,7 +376,7 @@ export default function MediaPlayback({
           className="block h-full w-full object-contain"
         />
       )}
-      {audioUrl && (
+      {audioUrl && !getSharedAudio && (
         <audio
           ref={audioRef}
           src={audioUrl}
@@ -372,6 +392,7 @@ export default function MediaPlayback({
               onClick={() =>
                 playing ? commands.current.pause() : commands.current.play()
               }
+              aria-label={playing ? "Pause" : "Play"}
             >
               {playing ? <Pause /> : <Play />}
             </button>

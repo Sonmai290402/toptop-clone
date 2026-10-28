@@ -19,6 +19,7 @@ type VideoPlayerProps = {
   volume: number;
   muted: boolean;
   soundtrack?: PostSound | null;
+  getSharedAudio?: () => HTMLAudioElement | null;
   onVolumeChange: (volume: number, muted: boolean) => void;
   info: {
     username: string;
@@ -37,6 +38,7 @@ export default function VideoPlayer({
   volume,
   muted,
   soundtrack,
+  getSharedAudio,
   onVolumeChange,
   info,
 }: VideoPlayerProps) {
@@ -60,6 +62,7 @@ export default function VideoPlayer({
               mediaType={mediaType}
               title={title}
               soundtrack={soundtrack}
+              getSharedAudio={getSharedAudio}
               active={isActive}
               autoPlay
               volume={volume}
