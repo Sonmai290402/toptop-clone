@@ -10,8 +10,8 @@ test("upload limits and protected routes", () => {
   for (const input of [{ mimeType: "image/svg+xml", size: 100 }, { mimeType: "image/png", size: 10485761 }, { mimeType: "video/mp4", size: 0 }]) {
     assert.equal(uploadSchema.safeParse(input).success, false);
   }
-  for (const path of ["/@alice", "/%40alice", "/alice", "/upload", "/following", "/auth/reset-password", "/admin", "/admin/sounds", "/%61dmin/sounds"]) assert.equal(isProtectedPath(path), true, path);
-  for (const path of ["/", "/explore", "/auth/signed-in", "/images/logo.png"]) assert.equal(isProtectedPath(path), false, path);
+  for (const path of ["/@alice", "/%40alice", "/@alice.smith", "/upload", "/following", "/auth/reset-password", "/admin", "/admin/sounds", "/%61dmin/sounds"]) assert.equal(isProtectedPath(path), true, path);
+  for (const path of ["/", "/alice", "/unknown-page", "/@", "/%40", "/explore", "/auth/signed-in", "/images/logo.png"]) assert.equal(isProtectedPath(path), false, path);
 });
 
 test("uploads enforce ownership, file metadata and idempotent publishing", async () => {
