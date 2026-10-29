@@ -14,5 +14,12 @@ export function isAdminPath(pathname: string) {
   } catch { return false; }
 }
 export function isProfileSegment(segment: string) {
-  return segment.startsWith("@") && segment.length > 1 && !segment.includes("/");
+  return getProfileUsername(segment) !== null;
+}
+
+export function getProfileUsername(segment: string): string | null {
+  let decoded: string;
+  try { decoded = decodeURIComponent(segment); } catch { return null; }
+  if (!decoded.startsWith("@") || decoded.length <= 1 || decoded.includes("/")) return null;
+  return decoded.slice(1);
 }

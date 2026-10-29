@@ -1,21 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import ProfileHeader from "./Components/ProfileHeader";
 import ProfileContent from "./Components/ProfileContent";
 import { useProfile } from "@/hooks/queries/useProfile";
 
-const Profile = () => {
-  const { userId } = useParams<{ userId: string }>();
-  let id = userId;
-
-  try {
-    id = decodeURIComponent(userId);
-  } catch {
-    // Preserve the route parameter if decoding fails.
-  }
-
-  const { data: userData, error, isPending } = useProfile(id);
+const Profile = ({ username }: { username: string }) => {
+  const { data: userData, error, isPending } = useProfile(username);
 
   if (isPending) {
     return (

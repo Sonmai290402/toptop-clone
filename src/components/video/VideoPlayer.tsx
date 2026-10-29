@@ -22,6 +22,7 @@ type VideoPlayerProps = {
   getSharedAudio?: () => HTMLAudioElement | null;
   onVolumeChange: (volume: number, muted: boolean) => void;
   info: {
+    displayName: string;
     username: string;
     description: string;
     time?: string;
@@ -84,7 +85,7 @@ export default function VideoPlayer({
                   href={`/@${encodeURIComponent(info.username)}`}
                   className="truncate font-semibold hover:underline"
                 >
-                  {info.username}
+                  {info.displayName}
                 </Link>
                 {info.time && (
                   <p className="ml-2 shrink-0 text-sm text-muted-foreground">
