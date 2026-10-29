@@ -11,3 +11,5 @@ export const uploadSchema = z.object({
 export const publishSchema = z.object({ caption: z.string().trim().max(2200), sound: soundSelectionSchema.nullable().optional() }).strict();
 export type UploadTicket = { id: string; signedUrl: string };
 export type MediaPost = { id: string; userId: string; mediaType: "video" | "image"; mediaUrl: string; caption: string; createdAt: string; soundtrack?: PostSound | null };
+export type PostAuthor = { id: string; username: string; displayName: string; avatarUrl: string | null };
+export type MediaPostWithAuthor = MediaPost & { author: PostAuthor };

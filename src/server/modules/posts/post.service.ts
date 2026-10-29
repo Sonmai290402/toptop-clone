@@ -5,6 +5,7 @@ import { ApiError, databaseError } from "@/server/shared/errors";
 import { postDtos } from "../uploads/upload.service";
 import { soundColumns } from "@/lib/sounds";
 import { getProfile } from "../users/user.service";
+import type { MediaPostWithAuthor } from "@/lib/uploads";
 
 export const postListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -22,7 +23,19 @@ export async function listPosts(db: SupabaseClient, input: z.infer<typeof postLi
   const { data, error } = await query.order("created_at", { ascending }).order("id", { ascending }).range(input.offset, input.offset + input.limit);
   if (error) databaseError(error);
   const hasMore = data.length > input.limit;
-  return { data: await postDtos(db, data.slice(0, input.limit)), pagination: { hasMore, nextOffset: hasMore ? input.offset + input.limit : null } };
+  const posts = await postDtos(db, data.slice(0, input.limit));
+  const authorIds = [...new Set(posts.map(post => post.userId))];
+  const authors = authorIds.length
+    ? await db.from("profiles").select("id,username,display_name,avatar_url").in("id", authorIds)
+    : { data: [], error: null };
+  if (authors.error) databaseError(authors.error);
+  const authorMap = new Map(authors.data.map(author => [author.id, author]));
+  const items: MediaPostWithAuthor[] = posts.map(post => {
+    const author = authorMap.get(post.userId);
+    if (!author) throw new ApiError(503, "AUTHOR_UNAVAILABLE", "Unable to load the post author.");
+    return { ...post, author: { id: author.id, username: author.username, displayName: author.display_name, avatarUrl: author.avatar_url } };
+  });
+  return { data: items, pagination: { hasMore, nextOffset: hasMore ? input.offset + input.limit : null } };
 }
 
 export async function getPost(db: SupabaseClient, id: string) {

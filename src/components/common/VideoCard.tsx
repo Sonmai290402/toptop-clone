@@ -4,8 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ImageOff, Pause, Play, VideoOff } from "lucide-react";
 import type { VideoData } from "@/types/video.types";
+import Link from "next/link";
 
-export type VideoPreviewData = Omit<VideoData, "isPinned" | "viewCount"> & Partial<Pick<VideoData, "isPinned" | "viewCount">> & { mediaType: "video" | "image" };
+export type VideoPreviewData = Omit<VideoData, "isPinned" | "viewCount"> &
+  Partial<Pick<VideoData, "isPinned" | "viewCount">> & {
+    mediaType: "video" | "image";
+    username: string;
+  };
 type VideoCardProps = { video: VideoPreviewData };
 
 // const countFormatter = new Intl.NumberFormat("en", {
@@ -23,14 +28,14 @@ export default function VideoCard({ video }: VideoCardProps) {
     return () => player?.pause();
   }, []);
 
-  function playPreview() {
-    const player = videoRef.current;
-    if (player && !hasError) {
-      void player.play().catch(() => {
-        // Playback may be canceled when the pointer leaves the card.
-      });
-    }
-  }
+  // function playPreview() {
+  //   const player = videoRef.current;
+  //   if (player && !hasError) {
+  //     void player.play().catch(() => {
+  //       // Playback may be canceled when the pointer leaves the card.
+  //     });
+  //   }
+  // }
 
   function stopPreview() {
     const player = videoRef.current;
@@ -40,39 +45,51 @@ export default function VideoCard({ video }: VideoCardProps) {
   }
 
   if (video.mediaType === "image") {
-    return <article className="group relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted">
-      {hasError ? <div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-sm text-muted-foreground">
-        <ImageOff className="size-6" aria-hidden="true" />
-        Unable to load image
-      </div> : <Image
-        src={video.videoUrl}
-        alt={video.description || "Photo post"}
-        fill
-        unoptimized
-        sizes="(min-width: 1536px) 17vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-        onError={() => setHasError(true)}
-        className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-      />}
-    </article>;
+    return (
+      <Link
+        className="group relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted"
+        href={`/@${video.username}/video/${video.id}`}
+      >
+        {hasError ? (
+          <div
+            role="status"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-sm text-muted-foreground"
+          >
+            <ImageOff className="size-6" aria-hidden="true" />
+            Unable to load image
+          </div>
+        ) : (
+          <Image
+            src={video.videoUrl}
+            alt={video.description || "Photo post"}
+            fill
+            unoptimized
+            sizes="(min-width: 1536px) 17vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            onError={() => setHasError(true)}
+            className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+          />
+        )}
+      </Link>
+    );
   }
 
   return (
-    <button
+    <Link
       type="button"
       aria-label={`Preview video: ${video.description}`}
       aria-pressed={isPlaying}
-      disabled={hasError}
-      onClick={() => {
-        if (videoRef.current?.paused) playPreview();
-        else stopPreview();
-      }}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") playPreview();
-      }}
-      onPointerLeave={(event) => {
-        if (event.pointerType === "mouse") stopPreview();
-      }}
+      // onClick={() => {
+      //   if (videoRef.current?.paused) playPreview();
+      //   else stopPreview();
+      // }}
+      // onPointerEnter={(event) => {
+      //   if (event.pointerType === "mouse") playPreview();
+      // }}
+      // onPointerLeave={(event) => {
+      //   if (event.pointerType === "mouse") stopPreview();
+      // }}
       onBlur={stopPreview}
+      href={`/@${video.username}/video/${video.id}`}
       className="group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-lg bg-muted text-left text-white outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-default"
     >
       <video
@@ -123,6 +140,6 @@ export default function VideoCard({ video }: VideoCardProps) {
         </span>
       </span>
       */}
-    </button>
+    </Link>
   );
 }

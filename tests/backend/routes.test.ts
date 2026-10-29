@@ -121,7 +121,11 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       return Response.json([row]);
     }
     if (["/auth/v1/logout", "/auth/v1/recover", "/auth/v1/resend"].includes(url.pathname)) return Response.json({});
-    if (url.pathname === "/rest/v1/profiles") return Response.json(missingProfile ? null : { id: userId, username: "alice", display_name: "Alice", avatar_url: null, role: adminRole ? "admin" : "user" });
+    if (url.pathname === "/rest/v1/profiles") {
+      const profile = { id: userId, username: "alice", display_name: "Alice", avatar_url: null, role: adminRole ? "admin" : "user" };
+      if (url.searchParams.get("id")?.startsWith("in.")) return Response.json(missingProfile ? [] : [profile]);
+      return Response.json(missingProfile ? null : profile);
+    }
     if (url.pathname === "/rest/v1/rpc/api_profile") return Response.json(missingProfile ? null : {
       ...author, bio: "Hello", createdAt: "2026-10-23T00:00:00Z",
       followerCount: 12, followingCount: 5, likeCount: 40,

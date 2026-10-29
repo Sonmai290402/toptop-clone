@@ -10,6 +10,7 @@ import VideoActions from "../common/VideoActions";
 import Comments from "../common/Comments";
 
 type VideoPlayerProps = {
+  variant?: "feed" | "watch";
   src: string;
   mediaType: "video" | "image";
   postId: string;
@@ -30,6 +31,7 @@ type VideoPlayerProps = {
 };
 
 export default function VideoPlayer({
+  variant = "feed",
   src,
   mediaType,
   postId,
@@ -46,8 +48,8 @@ export default function VideoPlayer({
   const frameRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="grid min-h-0 w-full min-w-0 max-w-[1400px] flex-1 grid-rows-[minmax(0,1fr)_minmax(0,0.7fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_clamp(18rem,30vw,24rem)] lg:grid-rows-1 lg:gap-6">
-      <div className="flex h-full min-h-0 min-w-0 items-center gap-3">
+    <div className={variant === "watch" ? "flex h-full min-h-0 w-full min-w-0" : "grid min-h-0 w-full min-w-0 max-w-[1400px] flex-1 grid-rows-[minmax(0,1fr)_minmax(0,0.7fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_clamp(18rem,30vw,24rem)] lg:grid-rows-1 lg:gap-6"}>
+      <div className="flex h-full min-h-0 w-full min-w-0 items-center gap-3">
         <div className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center [container-type:size]">
           <div
             ref={frameRef}
@@ -78,6 +80,7 @@ export default function VideoPlayer({
               }}
             />
             <div
+              hidden={variant === "watch"}
               className={`absolute left-0 w-full overflow-y-auto overscroll-contain bg-gradient-to-t from-black/70 to-transparent p-3 text-white transition-[bottom] duration-400 ${soundtrack ? "bottom-[88px] max-h-[calc(100%-88px)]" : mediaType === "video" ? "bottom-0 max-h-full group-hover/video:bottom-[66px] group-hover/video:max-h-[calc(100%-66px)] group-hover/video:bg-black/50" : "bottom-0 max-h-full"}`}
             >
               <div className="flex min-w-0 items-center">
@@ -118,7 +121,8 @@ export default function VideoPlayer({
         />
       </div>
 
-      <Comments key={postId} postId={postId} isActive={isActive} />
+      {variant === "feed" && <Comments key={postId} postId={postId} isActive={isActive} />}
     </div>
   );
 }
+
