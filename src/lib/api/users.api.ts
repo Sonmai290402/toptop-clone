@@ -1,12 +1,21 @@
 import type { ApiResponse, ProfileDto } from "@/types/api.types";
 import { apiFetch } from "./client";
 
+export type UpdateProfileData = {
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string | null;
+};
+
 export function normalizeUsername(username: string) {
   return username.trim().replace(/^@/, "").toLowerCase();
 }
 
 export function getUserById(userId: string, signal?: AbortSignal) {
-  return apiFetch<ApiResponse<ProfileDto>>(`/users/${encodeURIComponent(userId)}`, { signal });
+  return apiFetch<ApiResponse<ProfileDto>>(
+    `/users/${encodeURIComponent(userId)}`,
+    { signal },
+  );
 }
 
 export function getUserByUsername(username: string, signal?: AbortSignal) {
@@ -18,4 +27,11 @@ export function getUserByUsername(username: string, signal?: AbortSignal) {
 
 export function getMyProfile(signal?: AbortSignal) {
   return apiFetch<ApiResponse<ProfileDto>>("/me", { signal });
+}
+
+export function updateMyProfile(data: UpdateProfileData) {
+  return apiFetch<ApiResponse<ProfileDto>>("/me", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 }
