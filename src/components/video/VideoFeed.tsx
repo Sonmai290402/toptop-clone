@@ -14,12 +14,13 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
         .map((video) => [video.id, video]),
     ).values(),
   ];
-  console.log("🚀 ~ VideoFeed ~ videos:", videos);
   const feedRef = useRef<HTMLDivElement>(null);
   const soundtrackRef = useRef<HTMLAudioElement>(null);
   const getSharedAudio = useCallback(() => soundtrackRef.current, []);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [lastVisibleId, setLastVisibleId] = useState<string | null>(null);
+  const activeIndex = videos.findIndex((video) => video.id === activeVideoId);
+  const mountedIndex = Math.max(0, videos.findIndex((video) => video.id === lastVisibleId));
   const { volume, muted, ready, setPlaybackVolume } = usePlaybackVolume();
   const { fetchNextPage, hasNextPage, isFetching, isFetchNextPageError } =
     query;
@@ -32,8 +33,10 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
         entries.forEach((entry) => {
           const id = (entry.target as HTMLElement).dataset.videoId;
           if (!id) return;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6)
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
             setActiveVideoId(id);
+            setLastVisibleId(id);
+          }
           else setActiveVideoId((current) => (current === id ? null : current));
         });
       },
@@ -46,17 +49,9 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
   }, [query.data]);
 
   useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasNextPage || isFetching || isFetchNextPageError) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) void fetchNextPage();
-      },
-      { root: feedRef.current, rootMargin: "0px 0px 300px 0px" },
-    );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetching, isFetchNextPageError, fetchNextPage]);
+    if (activeIndex < 0 || videos.length - activeIndex - 1 > 3 || !hasNextPage || isFetching || isFetchNextPageError) return;
+    void fetchNextPage();
+  }, [activeIndex, videos.length, hasNextPage, isFetching, isFetchNextPageError, fetchNextPage]);
 
   return (
     <div
@@ -90,14 +85,14 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
             : "No published posts yet."}
         </p>
       )}
-      {videos.map((video) => (
+      {videos.map((video, index) => (
         <section
           key={video.id}
           data-video-id={video.id}
           aria-label={`${video.mediaType === "image" ? "Photo" : "Video"} by ${video.author.username}`}
           className="relative flex h-full min-h-0 min-w-0 snap-start snap-always flex-col items-center px-2 py-3 sm:px-4"
         >
-          <VideoPlayer
+          {Math.abs(index - mountedIndex) <= 1 && <VideoPlayer
             postId={video.id}
             mediaType={video.mediaType}
             src={video.mediaUrl}
@@ -117,12 +112,11 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
                 timeZone: "Asia/Ho_Chi_Minh",
               }),
             }}
-          />
+          />}
         </section>
       ))}
       {hasNextPage && (
         <div
-          ref={loadMoreRef}
           className="flex min-h-24 snap-start items-center justify-center p-6"
         >
           {isFetchNextPageError ? (
@@ -146,6 +140,9 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
             </button>
           )}
         </div>
+      )}
+      {query.data && videos.length > 0 && !hasNextPage && (
+        <p role="status" className="p-6 text-center text-muted-foreground">You have reached the end.</p>
       )}
     </div>
   );

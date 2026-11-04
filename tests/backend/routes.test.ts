@@ -226,7 +226,12 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
       const page = await response.json();
       assert.equal(page.data[0].author.username, "alice");
       assert.equal(page.data.length, 1);
-      assert.equal(page.pagination.nextOffset, 1);
+        assert.equal(typeof page.pagination.nextCursor, "string");
+        const nextResponse = await mediaFeed(new NextRequest(`http://localhost:3000/api/v1/posts/feed?limit=1&cursor=${page.pagination.nextCursor}`));
+        assert.equal(nextResponse.status, 200);
+        assert.equal(requests.at(-1)?.body?.p_before_id, page.data[0].id);
+        assert.equal((await mediaFeed(request("posts/feed?cursor=invalid"))).status, 400);
+        assert.equal((await mediaFeed(request(`posts/feed?feed=following&cursor=${page.pagination.nextCursor}`))).status, 400);
       const mixedPage = await (await mediaFeed(new NextRequest("http://localhost:3000/api/v1/posts/feed?limit=2"))).json();
       assert.deepEqual(mixedPage.data.map((post: { mediaType: string }) => post.mediaType), ["video", "image"]);
       assert.equal(mixedPage.pagination.hasMore, false);
