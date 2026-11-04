@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={`${manrope.variable} h-full antialiased`}>
+    <html lang={locale} suppressHydrationWarning className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full p-4">
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>

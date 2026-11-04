@@ -23,15 +23,12 @@ import {
   InputGroupInput,
 } from "../ui/input-group";
 import { cn } from "cn";
-import { ModeToggle } from "../common/ModeToggle";
-import { useTheme } from "next-themes";
 
 const AppSideBar = () => {
   const t = useTranslations();
   const pathname = usePathname();
   const { state } = useSidebar();
   const { requireAuth, isLoading } = useAuth();
-  const { theme } = useTheme();
 
   const MENU_ITEMS = [
     { label: t("for-you"), href: "/", icon: <Home className="w-5! h-5!" /> },
@@ -61,16 +58,22 @@ const AppSideBar = () => {
       <SidebarContent className="p-2">
         <div className="flex justify-between items-center">
           {state === "expanded" && (
-            <Image
-              src={
-                theme === "dark"
-                  ? "/images/Toptop_logo_dark.png"
-                  : "/images/Toptop_logo_light.png"
-              }
-              alt="Logo"
-              width={150}
-              height={30}
-            />
+            <>
+              <Image
+                src="/images/Toptop_logo_light.png"
+                alt="Logo"
+                width={150}
+                height={30}
+                className="dark:hidden"
+              />
+              <Image
+                src="/images/Toptop_logo_dark.png"
+                alt="Logo"
+                width={150}
+                height={30}
+                className="hidden dark:block"
+              />
+            </>
           )}
           <SidebarTrigger />
         </div>
