@@ -8,6 +8,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthProvider from "@/providers/AuthProvider";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -24,17 +25,24 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={`${manrope.variable} h-full antialiased dark`}>
+    <html lang={locale} className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full p-4">
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
-              <SidebarProvider className="min-h-0">
-                <Suspense fallback={null}>
-                  <AppSideBar />
-                </Suspense>
-                {children}
-              </SidebarProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <SidebarProvider className="min-h-0">
+                  <Suspense fallback={null}>
+                    <AppSideBar />
+                  </Suspense>
+                  {children}
+                </SidebarProvider>
+              </ThemeProvider>
             </AuthProvider>
           </QueryProvider>
         </NextIntlClientProvider>

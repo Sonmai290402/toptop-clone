@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ModeToggle } from "../common/ModeToggle";
 
 export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
   const t = useTranslations();
@@ -112,13 +113,20 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
             {t("profile")}
           </Link>
         )}
-        {user.role === UserRole.ADMIN && <Link className="block text-sm hover:text-primary" href="/admin">Admin</Link>}
+        {user.role === UserRole.ADMIN && (
+          <Link className="block text-sm hover:text-primary" href="/admin">
+            Admin
+          </Link>
+        )}
         <Link
           className="block text-sm hover:text-primary"
           href="/auth/reset-password"
         >
           {t("change-password")}
         </Link>
+
+        <ModeToggle />
+
         <Button
           variant="outline"
           className="w-full"
