@@ -2,11 +2,15 @@
 
 ## For You and Following
 
-Apply migrations through `20261027000100_mixed_media_feed.sql` before using the mixed feeds (`npx supabase db push` for a linked project). This adds `media_post_feed`; the previous video-only RPC remains available for compatibility.
-`GET /api/v1/posts/feed?feed=for-you&limit=10&offset=0` returns published videos and images from `media_posts`, newest first. For You currently uses chronological ordering, not personalized recommendations.
-Use `feed=following` for published posts by accounts the current user follows. Following requires a valid session (401 otherwise); its database function also enforces authentication. Pending uploads are excluded before pagination. `limit` is 1–50, `offset` is 0–100000.
+Apply migrations through `20261104000100_feed_cursor.sql` before running the updated feed (`npx supabase db push` for a linked project, or run the migration in SQL Editor). The previous offset RPC remains available for older deployments.
+`GET /api/v1/posts/feed?feed=for-you&limit=10` returns published videos and images from `media_posts`, newest first. For You currently uses chronological ordering, not personalized recommendations.
+Use `feed=following` for published posts by accounts the current user follows. Following requires a valid session (401 otherwise); its database function also enforces authentication. Pending uploads are excluded before pagination. `limit` is 1–50 (default 10). Pass `nextCursor` as the URL-encoded `cursor` query parameter for subsequent pages. Invalid cursors or cursors for another feed return 400. The HTTP feed no longer accepts `offset`.
 
-The response uses `{ data: [...], pagination: { hasMore, nextOffset } }`. Each post includes `author: { id, username, displayName, avatarUrl }`. `GET /api/v1/posts/:postId` also includes this author information.
+The feed response uses `{ data: [...], pagination: { hasMore, nextCursor } }`. At the end, `hasMore` is false and `nextCursor` is null. Each post includes `author: { id, username, displayName, avatarUrl }`. `GET /api/v1/posts/:postId` also includes this author information.
+
+The cursor preserves `(created_at DESC, id DESC)` ordering and timestamp precision. Newer posts appear after refreshing the feed rather than shifting subsequent pages. This is not a frozen database snapshot. Existing published-date indexes support these queries.
+
+The client requests 10 posts per page and loads more when at most three unseen posts remain. Only the current player and its immediate neighbors are mounted; other posts retain their full-height scroll slots. Metadata remains cached for backward scrolling. Failed page requests expose a retry button. Window focus does not automatically refresh the feed. API responses contain media URLs, not full media files.
 
 Both feed pages use `mediaType` (`video` or `image`) to render each post, with author profiles, captions and dates. Images fit their natural aspect ratio without video controls; only the visible video auto-plays. Both types support comments, likes, saves and follows; see [Post interactions](./POST-INTERACTIONS.md). Shared volume, scrolling and the existing player layout are preserved. The legacy `/videos` API remains separate.
 
