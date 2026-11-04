@@ -1,5 +1,13 @@
 # User profile API
 
+## Avatar upload
+
+Apply migrations through `20261104000300_avatar_size_limit.sql` before uploading avatars. JPEG, PNG and WebP files up to 10 MB are accepted without resizing or compression.
+
+`POST /api/v1/me/avatar` accepts JSON { mimeType, size } and returns { data: { path, signedUrl } }. Upload the file directly to signedUrl with PUT and its Content-Type. Then call `PATCH /api/v1/me/avatar` with JSON { path } to validate the stored file and update the profile. Both API endpoints require authentication; the completion endpoint only accepts paths owned by the current user. It returns { data: ProfileDto }. File content bypasses the Next.js request body. Failed or abandoned uploads may remain in Storage; previous avatars are retained.
+
+The avatar dialog uses a local object URL for preview. Selecting a file or cancelling sends no upload/update request. Save sends the file and refreshes profile, session and post queries after success. Other users' avatars are view-only. Editing name/bio does not send an avatar URL.
+
 ## Endpoints
 
 | Method | Path | Authentication | Purpose |
