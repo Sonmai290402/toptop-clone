@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ import type { PostSound } from "@/lib/sounds";
 import { usePlaybackVolume } from "@/hooks/usePlaybackVolume";
 
 export default function Upload() {
+  const ui = useUiTranslations("ui");
   const { user } = useAuth();
   const client = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
@@ -92,7 +94,7 @@ export default function Upload() {
       setCaption("");
       setSound(null);
       if (input.current) input.current.value = "";
-      setMessage("Your post was uploaded successfully.");
+      setMessage(ui('your_post_was_uploaded_successfully'));
       void client.invalidateQueries({ queryKey: ["my-posts", user?.id] });
       void client.invalidateQueries({ queryKey: ["posts"] });
     } catch (failure) {
@@ -100,7 +102,7 @@ export default function Upload() {
         setError(
           failure instanceof Error
             ? failure.message
-            : "Upload failed. Please try again.",
+            : ui('upload_failed_please_try_again'),
         );
     } finally {
       if (!abort.signal.aborted) setBusy(false);
@@ -110,7 +112,7 @@ export default function Upload() {
   return (
     <main className="mx-auto w-full min-w-0 max-w-5xl space-y-8 p-4 sm:p-8">
       <header>
-        <h1 className="text-2xl font-bold">Upload a post</h1>
+        <h1 className="text-2xl font-bold">{ui('upload_a_post')}</h1>
         <p className="mt-2 text-muted-foreground">
           Share one video or photo. Uploaded files are public.
         </p>
@@ -122,7 +124,7 @@ export default function Upload() {
         <div className="min-w-0 space-y-3">
           <label className="flex min-h-64 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center focus-within:ring-2 focus-within:ring-primary">
             <UploadCloud className="size-10 text-primary" />
-            <span className="font-semibold">Select a video or photo</span>
+            <span className="font-semibold">{ui('select_a_video_or_photo')}</span>
             <span className="text-sm text-muted-foreground">
               MP4 / WebM · max 50 MB
               <br />
@@ -140,7 +142,7 @@ export default function Upload() {
           {file && preview && (
             <div className="relative flex h-72 justify-center overflow-hidden rounded-xl bg-black">
               <MediaPlayback key={`${preview}:${sound?.soundId ?? "none"}:${sound?.startMs}:${sound?.durationMs}`} src={preview} mediaType={file.type.startsWith("video/") ? "video" : "image"}
-                title="Selected media preview" soundtrack={sound} active={ready && !busy} volume={previewVolume} muted={previewMuted}
+                title={ui('selected_media_preview')} soundtrack={sound} active={ready && !busy} volume={previewVolume} muted={previewMuted}
                 onVolumeChange={setPlaybackVolume}
                 onDuration={seconds => setMediaDuration(Number.isFinite(seconds) ? seconds : 0)} />
             </div>
@@ -161,7 +163,7 @@ export default function Upload() {
             onChange={(event) => setCaption(event.target.value)}
             maxLength={2200}
             disabled={busy}
-            placeholder="Describe your post..."
+            placeholder={ui('describe_your_post')}
             className="min-h-40 w-full resize-y rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary"
           />
           <p className="text-right text-sm text-muted-foreground">
@@ -178,7 +180,7 @@ export default function Upload() {
               <p className="text-sm">
                 {progress < 100
                   ? `Uploading: ${progress}%`
-                  : "Saving your post..."}
+                  : ui('saving_your_post')}
               </p>
             </div>
           )}
@@ -198,24 +200,24 @@ export default function Upload() {
             className="mt-auto rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy
-              ? "Uploading..."
+              ? ui('uploading')
               : uploadedId
-                ? "Retry saving"
-                : "Publish post"}
+                ? ui('retry_saving')
+                : ui('publish_post')}
           </button>
         </div>
       </form>
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Your recent uploads</h2>
-        {posts.isPending && <p>Loading your posts...</p>}
+        <h2 className="text-xl font-semibold">{ui('your_recent_uploads')}</h2>
+        {posts.isPending && <p>{ui('loading_your_posts')}</p>}
         {posts.isError && (
           <div role="alert">
-            <p>Unable to load your uploads.</p>
+            <p>{ui('unable_to_load_your_uploads')}</p>
             <button
               onClick={() => void posts.refetch()}
               className="text-primary underline"
             >
-              Try again
+              {ui('try_again')}
             </button>
           </div>
         )}

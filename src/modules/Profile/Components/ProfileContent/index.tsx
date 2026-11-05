@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useState } from "react";
 import { ListVideo, Bookmark, Heart } from "lucide-react";
@@ -16,6 +17,7 @@ const sortOptions = [
 ] as const;
 
 export default function ProfileContent({ userId }: { userId: string }) {
+  const ui = useUiTranslations("ui");
   const [sortBy, setSortBy] = useState<PostSort>("latest");
   const [tab, setTab] = useState("video");
   const { user } = useAuth();
@@ -49,22 +51,22 @@ export default function ProfileContent({ userId }: { userId: string }) {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-2">
           <TabsList
             variant="line"
-            aria-label="Profile content"
+            aria-label={ui('profile_content')}
             className="max-w-full"
           >
             <TabsTrigger value="video" className="px-4 text-base sm:px-8">
               <ListVideo />
-              <span>Posts</span>
+              <span>{ui('posts')}</span>
             </TabsTrigger>
             {ownProfile && (
               <>
                 <TabsTrigger value="saved" className="px-4 text-base sm:px-8">
                   <Bookmark />
-                  <span>Saved</span>
+                  <span>{ui('saved')}</span>
                 </TabsTrigger>
                 <TabsTrigger value="liked" className="px-4 text-base sm:px-8">
                   <Heart />
-                  <span>Liked</span>
+                  <span>{ui('liked')}</span>
                 </TabsTrigger>
               </>
             )}
@@ -72,7 +74,7 @@ export default function ProfileContent({ userId }: { userId: string }) {
           {(tab === "video" || !ownProfile) && (
             <div
               role="group"
-              aria-label="Sort posts"
+              aria-label={ui('sort_posts')}
               className="flex flex-wrap gap-1 rounded-lg bg-muted p-1"
             >
               {sortOptions.map(({ value, label }) => (
@@ -92,22 +94,22 @@ export default function ProfileContent({ userId }: { userId: string }) {
         <TabsContent value="video" className="space-y-4 pt-4">
           {query.isPending && (
             <p role="status" className="py-12 text-center">
-              Loading posts...
+              {ui('loading_posts')}
             </p>
           )}
           {query.isError && !query.data && (
             <div role="alert" className="space-y-2 py-12 text-center">
-              <p>Unable to load posts.</p>
+              <p>{ui('unable_to_load_posts')}</p>
               <button
                 onClick={() => void query.refetch()}
                 className="text-primary underline"
               >
-                Try again
+                {ui('try_again')}
               </button>
             </div>
           )}
           {query.data && (
-            <VideoGrid videos={videos} emptyMessage="No published posts yet." />
+            <VideoGrid videos={videos} emptyMessage={ui('no_published_posts_yet')} />
           )}
           {query.isFetchNextPageError && (
             <p role="alert" className="text-center text-red-400">
@@ -121,7 +123,7 @@ export default function ProfileContent({ userId }: { userId: string }) {
                 onClick={() => void query.fetchNextPage()}
                 className="rounded-lg border px-5 py-2 disabled:opacity-50"
               >
-                {query.isFetchingNextPage ? "Loading..." : "Load more"}
+                {query.isFetchingNextPage ? ui('loading') : ui('load_more')}
               </button>
             </div>
           )}
@@ -148,6 +150,7 @@ function InteractedVideos({
   kind: "liked" | "saved";
   active: boolean;
 }) {
+  const ui = useUiTranslations("ui");
   const query = useMyInteractedPosts(kind, active);
   const posts = [
     ...new Map(
@@ -158,10 +161,10 @@ function InteractedVideos({
   ];
   return (
     <div className="space-y-4">
-      {query.isPending && <p role="status">Loading posts...</p>}
+      {query.isPending && <p role="status">{ui('loading_posts')}</p>}
       {query.isError && (
         <div role="alert">
-          <p>Unable to load posts.</p>
+          <p>{ui('unable_to_load_posts')}</p>
           <button
             onClick={() =>
               void (query.isFetchNextPageError
@@ -170,7 +173,7 @@ function InteractedVideos({
             }
             className="text-primary underline"
           >
-            Try again
+            {ui('try_again')}
           </button>
         </div>
       )}
@@ -193,7 +196,7 @@ function InteractedVideos({
           onClick={() => void query.fetchNextPage()}
           className="text-primary"
         >
-          {query.isFetchingNextPage ? "Loading..." : "Load more"}
+          {query.isFetchingNextPage ? ui('loading') : ui('load_more')}
         </button>
       )}
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 export default function GoogleSignInButton({ pending, disabled, onClick }: {
   pending: boolean; disabled?: boolean; onClick: () => void;
 }) {
+  const ui = useUiTranslations("ui");
   return <Button type="button" variant="outline" disabled={disabled || pending} onClick={onClick}
     aria-busy={pending} className="h-12 w-full gap-3 border-border bg-background font-semibold">
     {pending ? <LoaderCircle className="size-5 animate-spin" aria-hidden="true" /> : (
@@ -16,6 +18,6 @@ export default function GoogleSignInButton({ pending, disabled, onClick }: {
         <path fill="#EA4335" d="M12 5.96c1.47 0 2.79.51 3.82 1.51l2.86-2.86A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.94 5.5l3.34 2.59C7.19 7.72 9.4 5.96 12 5.96Z" />
       </svg>
     )}
-    {pending ? "Redirecting to Google..." : "Continue with Google"}
+    {pending ? ui('redirecting_to_google') : ui('continue_with_google')}
   </Button>;
 }

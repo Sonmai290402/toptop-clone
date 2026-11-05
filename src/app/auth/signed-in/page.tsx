@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function SignedInPage() {
+  const ui = useUiTranslations("ui");
   const { user, isLoading, error, retrySession, openAuth, completeSignIn } =
     useAuth();
   const notified = useRef(false);
@@ -28,7 +30,7 @@ export default function SignedInPage() {
               className="mx-auto size-8 animate-spin text-primary"
               aria-hidden="true"
             />
-            <p>Checking your session...</p>
+            <p>{ui('checking_your_session')}</p>
           </div>
         ) : error ? (
           <>
@@ -36,7 +38,7 @@ export default function SignedInPage() {
             <p role="alert" className="text-muted-foreground">
               Unable to load your account. Check your connection and try again.
             </p>
-            <Button onClick={retrySession}>Try again</Button>
+            <Button onClick={retrySession}>{ui('try_again')}</Button>
           </>
         ) : user ? (
           <>

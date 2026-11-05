@@ -3,9 +3,10 @@
 import { useRef } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 export function ModeToggle() {
+  const t = useTranslations();
   const { resolvedTheme, setTheme } = useTheme();
   const iconRef = useRef<HTMLSpanElement>(null);
 
@@ -28,11 +29,12 @@ export function ModeToggle() {
 
   return (
     <button
+      type="button"
       className="w-full flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
       onClick={toggleTheme}
     >
-      <span className="dark:hidden">Light</span>
-      <span className="hidden dark:inline">Dark</span>
+      <span className="dark:hidden">{t("light")}</span>
+      <span className="hidden dark:inline">{t("dark")}</span>
       <span ref={iconRef} className="inline-flex shrink-0" aria-hidden="true">
         <Sun className="size-4 dark:hidden" />
         <Moon className="hidden size-4 dark:block" />

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -37,6 +38,7 @@ export default function MediaPlayback({
   onDimensions,
   onDuration,
 }: Props) {
+  const ui = useUiTranslations("ui");
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -392,7 +394,7 @@ export default function MediaPlayback({
               onClick={() =>
                 playing ? commands.current.pause() : commands.current.play()
               }
-              aria-label={playing ? "Pause" : "Play"}
+              aria-label={playing ? ui('pause') : ui('play')}
             >
               {playing ? <Pause /> : <Play />}
             </button>
@@ -400,7 +402,7 @@ export default function MediaPlayback({
               {timeLabel(position)} / {timeLabel(total)}
             </span>
             <input
-              aria-label="Playback position"
+              aria-label={ui('playback_position')}
               type="range"
               min={0}
               max={total || 1}
@@ -413,7 +415,7 @@ export default function MediaPlayback({
             />
             <button
               type="button"
-              aria-label="Fullscreen"
+              aria-label={ui('fullscreen')}
               onClick={() =>
                 void hostRef.current
                   ?.requestFullscreen()
@@ -436,7 +438,7 @@ export default function MediaPlayback({
               {muted ? <VolumeOff /> : <Volume2 />}
             </button>
             <input
-              aria-label="Playback volume"
+              aria-label={ui('playback_volume')}
               type="range"
               min={0}
               max={1}

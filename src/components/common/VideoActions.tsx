@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useIsMutating } from "@tanstack/react-query";
 import { Bookmark, Heart, MessageCircle, Plus, Check } from "lucide-react";
@@ -22,6 +23,7 @@ export default function VideoActions({
   author: FeedVideo["author"];
   isActive: boolean;
 }) {
+  const ui = useUiTranslations("ui");
   const { requireAuth, isLoading, user } = useAuth();
   const state = usePostState(postId, isActive);
   const interaction = usePostInteraction(postId);
@@ -64,7 +66,7 @@ export default function VideoActions({
         {user?.id !== author.id && !state.data?.isFollowing && (
           <Button
             aria-label={
-              state.data?.isFollowing ? "Unfollow user" : "Follow user"
+              state.data?.isFollowing ? ui('unfollow_user') : ui('follow_user')
             }
             aria-pressed={state.data?.isFollowing ?? false}
             disabled={unavailable || followingBusy}
@@ -84,7 +86,7 @@ export default function VideoActions({
       <div className="flex flex-col items-center gap-2">
         <Button
           variant="secondary"
-          aria-label={state.data?.isLiked ? "Unlike post" : "Like post"}
+          aria-label={state.data?.isLiked ? ui('unlike_post') : ui('like_post')}
           aria-pressed={state.data?.isLiked ?? false}
           disabled={unavailable || actionBusy}
           onClick={() => toggle("like")}
@@ -126,7 +128,7 @@ export default function VideoActions({
         )}
         <Button
           variant="secondary"
-          aria-label={state.data?.isSaved ? "Unsave post" : "Save post"}
+          aria-label={state.data?.isSaved ? ui('unsave_post') : ui('save_post')}
           aria-pressed={state.data?.isSaved ?? false}
           disabled={unavailable || actionBusy}
           onClick={() => toggle("save")}

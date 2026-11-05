@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useRef, useState } from "react";
 import { Upload } from "lucide-react";
@@ -18,6 +19,7 @@ export default function AvatarDialog({
   canEdit: boolean;
   onClose: () => void;
 }) {
+  const ui = useUiTranslations("ui");
   const [file, setFile] = useState<File | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function AvatarDialog({
   }, [preview]);
   const save = useMutation({
     mutationFn: async () => {
-      if (!file || !canEdit) throw new Error("Choose an image first.");
+      if (!file || !canEdit) throw new Error(ui('choose_an_image_first'));
       const { data } = await apiFetch<{ data: { path: string; signedUrl: string } }>("/me/avatar", {
         method: "POST", body: JSON.stringify({ mimeType: file.type, size: file.size }),
       });
@@ -59,13 +61,13 @@ export default function AvatarDialog({
         showCloseButton={!save.isPending}
       >
         <DialogTitle className="sr-only">
-          {canEdit ? "Update avatar" : "Profile avatar"}
+          {canEdit ? ui('update_avatar') : ui('profile_avatar')}
         </DialogTitle>
         {src ? (
           <Image
             src={src}
             unoptimized
-            alt="Avatar preview"
+            alt={ui('avatar_preview')}
             width={400}
             height={400}
             className="h-auto w-[400px] max-w-full object-contain"
@@ -75,7 +77,7 @@ export default function AvatarDialog({
           />
         ) : (
           <div className="flex aspect-square w-[400px] max-w-full items-center justify-center bg-muted text-muted-foreground">
-            No avatar yet.
+            {ui('no_avatar_yet')}
           </div>
         )}
         {canEdit && (
@@ -87,12 +89,12 @@ export default function AvatarDialog({
               onClick={() => fileInput.current?.click()}
             >
               <Upload className="mr-2 h-4 w-4" />
-              Choose image
+              {ui('choose_image')}
             </Button>
             <input
               ref={fileInput}
               hidden
-              aria-label="Choose image"
+              aria-label={ui('choose_image')}
               type="file"
               accept="image/jpeg,image/png,image/webp"
               disabled={save.isPending}
@@ -108,7 +110,7 @@ export default function AvatarDialog({
                   !selected.size ||
                   selected.size > 10 * 1024 * 1024
                 ) {
-                  setError("Choose a JPEG, PNG or WebP image up to 10 MB.");
+                  setError(ui('choose_a_jpeg_png_or_webp_image_up_to_10_mb'));
                   return;
                 }
                 setError(null);
@@ -127,13 +129,13 @@ export default function AvatarDialog({
                 disabled={save.isPending}
                 onClick={onClose}
               >
-                Cancel
+                {ui('cancel')}
               </Button>
               <Button
                 disabled={!file || !!error || save.isPending}
                 onClick={() => save.mutate()}
               >
-                {save.isPending ? "Saving..." : "Save"}
+                {save.isPending ? ui('saving') : ui('save')}
               </Button>
             </div>
           </>

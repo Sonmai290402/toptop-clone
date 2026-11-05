@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "cn";
@@ -18,6 +19,7 @@ export default function ExpandableCaption(props: ExpandableCaptionProps) {
 }
 
 function CaptionContent({ text, lines = 2, className, textClassName, expandedClassName, buttonClassName }: ExpandableCaptionProps) {
+  const ui = useUiTranslations("ui");
   const id = useId();
   const paragraph = useRef<HTMLParagraphElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -48,7 +50,7 @@ function CaptionContent({ text, lines = 2, className, textClassName, expandedCla
     {overflows && <button type="button" aria-expanded={expanded} aria-controls={id}
       onClick={event => { event.stopPropagation(); setExpanded(value => !value); }}
       className={cn("mt-1 rounded text-sm font-semibold underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-ring", buttonClassName)}>
-      {expanded ? "See less" : "See all"}
+      {expanded ? ui('see_less') : ui('see_all')}
     </button>}
   </div>;
 }

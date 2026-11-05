@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
@@ -9,6 +10,7 @@ import type { PostSound, Sound, SoundPage } from "@/lib/sounds";
 type Props = { value: PostSound | null; onChange: (value: PostSound | null) => void; mediaType: "video" | "image"; mediaDuration: number; disabled: boolean };
 
 export default function SoundPicker({ value, onChange, mediaType, mediaDuration, disabled }: Props) {
+  const ui = useUiTranslations("ui");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");
@@ -29,10 +31,10 @@ export default function SoundPicker({ value, onChange, mediaType, mediaDuration,
   }
   const tracks = query.data?.pages.flatMap(page => page.data) ?? [];
   return <fieldset disabled={disabled} className="min-w-0 space-y-3 rounded-xl border p-3 disabled:opacity-60">
-    <legend className="px-1 font-semibold">Sound</legend>
+    <legend className="px-1 font-semibold">{ui('sound')}</legend>
     <div className="flex flex-wrap items-center gap-3">
-      <button type="button" disabled={disabled || durationLimit < 1000} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50" onClick={() => { window.dispatchEvent(new CustomEvent("toptop-media-play")); setOpen(true); }}>{value ? "Change sound" : "Add sound"}</button>
-      {value && <button type="button" className="text-sm text-primary" onClick={() => onChange(null)}>Remove sound</button>}
+      <button type="button" disabled={disabled || durationLimit < 1000} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50" onClick={() => { window.dispatchEvent(new CustomEvent("toptop-media-play")); setOpen(true); }}>{value ? ui('change_sound') : ui('add_sound')}</button>
+      {value && <button type="button" className="text-sm text-primary" onClick={() => onChange(null)}>{ui('remove_sound')}</button>}
     </div>
     {mediaType === "video" && durationLimit < 1000 && <p className="text-xs text-muted-foreground">Load a video at least one second long to add sound.</p>}
     {value && <>
@@ -56,26 +58,26 @@ export default function SoundPicker({ value, onChange, mediaType, mediaDuration,
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/70" />
         <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-hidden rounded-2xl border bg-background p-5">
           <div className="flex items-center justify-between gap-3">
-            <Dialog.Title className="text-xl font-semibold">Add sound</Dialog.Title>
-            <Dialog.Close className="rounded border px-3 py-1 text-sm">Close</Dialog.Close>
+            <Dialog.Title className="text-xl font-semibold">{ui('add_sound')}</Dialog.Title>
+            <Dialog.Close className="rounded border px-3 py-1 text-sm">{ui('close')}</Dialog.Close>
           </div>
           <Dialog.Description className="text-sm text-muted-foreground">Choose a track, then adjust its segment and volume.</Dialog.Description>
-          <input aria-label="Search sounds" placeholder="Search by title or artist" maxLength={100} value={search} onChange={event => setSearch(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2" />
+          <input aria-label={ui('search_sounds')} placeholder={ui('search_by_title_or_artist')} maxLength={100} value={search} onChange={event => setSearch(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2" />
           {preview && <div className="space-y-2">
             <p className="truncate text-sm">Preview: {preview.title}</p>
             <audio key={preview.id} src={preview.audioUrl} controls preload="metadata" onError={() => setPreviewError(true)} className="h-10 w-full" />
             {previewError && <p role="alert" className="text-sm text-destructive">Unable to load this sound. Try another track.</p>}
           </div>}
           <div className="min-h-0 space-y-2 overflow-y-auto overscroll-contain">
-            {query.isPending && <p role="status">Loading sounds...</p>}
-            {query.isError && <div role="alert"><p>Unable to load sounds.</p><button type="button" className="text-primary" onClick={() => void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch())}>Try again</button></div>}
-            {query.data && !tracks.length && <p className="py-6 text-center text-muted-foreground">{term ? "No sounds match your search." : "No sounds available yet."}</p>}
+            {query.isPending && <p role="status">{ui('loading_sounds')}</p>}
+            {query.isError && <div role="alert"><p>{ui('unable_to_load_sounds')}</p><button type="button" className="text-primary" onClick={() => void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch())}>{ui('try_again')}</button></div>}
+            {query.data && !tracks.length && <p className="py-6 text-center text-muted-foreground">{term ? ui('no_sounds_match_your_search') : ui('no_sounds_available_yet')}</p>}
             {tracks.map(sound => <div key={sound.id} className="flex items-center gap-3 rounded-lg border p-3">
               <div className="min-w-0 flex-1"><p className="truncate font-medium">{sound.title}</p><p className="truncate text-xs text-muted-foreground">{sound.artist} · {(sound.durationMs / 1000).toFixed(1)}s</p></div>
               <button type="button" aria-label={`Preview ${sound.title}`} className="text-sm" onClick={() => { setPreview(sound); setPreviewError(false); }}>Preview</button>
               <button type="button" aria-label={`Use ${sound.title}`} className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground" onClick={() => select(sound)}>Use</button>
             </div>)}
-            {query.hasNextPage && <button type="button" disabled={query.isFetching} onClick={() => void query.fetchNextPage()} className="w-full py-2 text-primary">{query.isFetchingNextPage ? "Loading..." : "Load more"}</button>}
+            {query.hasNextPage && <button type="button" disabled={query.isFetching} onClick={() => void query.fetchNextPage()} className="w-full py-2 text-primary">{query.isFetchingNextPage ? ui('loading') : ui('load_more')}</button>}
           </div>
         </Dialog.Popup>
       </Dialog.Portal>

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import VideoPlayer from "./VideoPlayer";
@@ -6,6 +7,7 @@ import { useVideoFeed, type FeedType } from "@/hooks/queries/useVideoFeed";
 import { usePlaybackVolume } from "@/hooks/usePlaybackVolume";
 
 export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
+  const ui = useUiTranslations("ui");
   const query = useVideoFeed(feed);
   const videos = [
     ...new Map(
@@ -64,17 +66,17 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
       <audio ref={soundtrackRef} preload="metadata" />
       {query.isPending && (
         <p role="status" className="p-12 text-center text-muted-foreground">
-          Loading posts...
+          {ui('loading_posts')}
         </p>
       )}
       {query.isError && !query.data && (
         <div role="alert" className="space-y-3 p-12 text-center">
-          <p>Unable to load posts.</p>
+          <p>{ui('unable_to_load_posts')}</p>
           <button
             onClick={() => void query.refetch()}
             className="text-primary underline"
           >
-            Try again
+            {ui('try_again')}
           </button>
         </div>
       )}
@@ -82,7 +84,7 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
         <p className="p-12 text-center text-muted-foreground">
           {feed === "following"
             ? "No posts yet. Follow creators to see their published posts here."
-            : "No published posts yet."}
+            : ui('no_published_posts_yet')}
         </p>
       )}
       {videos.map((video, index) => (
@@ -127,7 +129,7 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
                 onClick={() => void fetchNextPage()}
                 className="text-primary underline"
               >
-                Try again
+                {ui('try_again')}
               </button>
             </div>
           ) : (
@@ -136,13 +138,13 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
               onClick={() => void fetchNextPage()}
               className="text-primary"
             >
-              {query.isFetchingNextPage ? "Loading..." : "Load more"}
+              {query.isFetchingNextPage ? ui('loading') : ui('load_more')}
             </button>
           )}
         </div>
       )}
       {query.data && videos.length > 0 && !hasNextPage && (
-        <p role="status" className="p-6 text-center text-muted-foreground">You have reached the end.</p>
+        <p role="status" className="p-6 text-center text-muted-foreground">{ui('you_have_reached_the_end')}</p>
       )}
     </div>
   );

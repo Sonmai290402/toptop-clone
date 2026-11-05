@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -30,5 +31,6 @@ function OAuthError() {
 }
 
 export default function OAuthErrorPage() {
-  return <main className="min-w-0 flex-1 px-4 py-16"><Suspense fallback={<p role="status">Loading...</p>}><OAuthError /></Suspense></main>;
+  const ui = useUiTranslations("ui");
+  return <main className="min-w-0 flex-1 px-4 py-16"><Suspense fallback={<p role="status">{ui('loading')}</p>}><OAuthError /></Suspense></main>;
 }

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useAuth } from "@/providers/AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +26,7 @@ type ProfileHeaderProps = {
 };
 
 const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
+  const ui = useUiTranslations("ui");
   const { requireAuth, user, isLoading } = useAuth();
   const isOwner = user?.id === userData.id;
   const follow = useFollowUser(userData.id);
@@ -49,7 +51,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
       <section className="flex gap-6 items-center ">
         <button
           type="button"
-          aria-label={isOwner ? "Update avatar" : "View avatar"}
+          aria-label={isOwner ? ui('update_avatar') : ui('view_avatar')}
           className={cn(
             "relative rounded-full overflow-hidden",
             isOwner &&
@@ -81,13 +83,13 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
               <span className="font-bold text-primary">
                 {userData.followingCount}
               </span>
-              <span>Following</span>
+              <span>{ui('following')}</span>
             </div>
             <div className="flex gap-2">
               <span className="font-bold text-primary">
                 {userData.followerCount}
               </span>
-              <span>Follower</span>
+              <span>{ui('follower')}</span>
             </div>
           </div>
           <div className="flex gap-4">
@@ -110,17 +112,17 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
               className="h-10"
             >
               {isOwner
-                ? "Edit Profile"
+                ? ui('edit_profile')
                 : followingBusy
-                  ? "Updating..."
+                  ? ui('updating')
                   : userData.isFollowing
-                    ? "Unfollow"
-                    : "Follow"}
+                    ? ui('unfollow')
+                    : ui('follow')}
             </Button>
             {isOwner && (
               <Button
                 variant="secondary"
-                aria-label="Profile settings"
+                aria-label={ui('profile_settings')}
                 onClick={() => requireAuth()}
                 className="h-10 px-3"
               >
@@ -150,7 +152,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
           className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
           showCloseButton={!updateProfile.isPending}
         >
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle>{ui('edit_profile')}</DialogTitle>
           <form
             className="space-y-5"
             noValidate
@@ -167,7 +169,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
             <fieldset disabled={updateProfile.isPending}>
               <FieldGroup>
                 <Field>
-                  <Label htmlFor="profile-name">Name</Label>
+                  <Label htmlFor="profile-name">{ui('name')}</Label>
                   <Input
                     id="profile-name"
                     {...form.register("displayName")}
@@ -189,7 +191,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
                   )}
                 </Field>
                 <Field>
-                  <Label htmlFor="profile-bio">Bio</Label>
+                  <Label htmlFor="profile-bio">{ui('bio')}</Label>
                   <textarea
                     id="profile-bio"
                     {...form.register("bio")}
@@ -228,10 +230,10 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
                 disabled={updateProfile.isPending}
                 onClick={() => setIsEditModalOpen(false)}
               >
-                Cancel
+                {ui('cancel')}
               </Button>
               <Button type="submit" disabled={updateProfile.isPending}>
-                {updateProfile.isPending ? "Saving..." : "Save"}
+                {updateProfile.isPending ? ui('saving') : ui('save')}
               </Button>
             </div>
           </form>

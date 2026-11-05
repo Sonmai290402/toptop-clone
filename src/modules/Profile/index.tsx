@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import ProfileHeader from "./Components/ProfileHeader";
 import ProfileContent from "./Components/ProfileContent";
 import { useProfile } from "@/hooks/queries/useProfile";
 
 const Profile = ({ username }: { username: string }) => {
+  const ui = useUiTranslations("ui");
   const { data: userData, error, isPending } = useProfile(username);
 
   if (isPending) {
@@ -24,7 +26,7 @@ const Profile = ({ username }: { username: string }) => {
   }
 
   if (!userData) {
-    return <p className="p-6">Profile not found.</p>;
+    return <p className="p-6">{ui('profile_not_found')}</p>;
   }
 
   return (

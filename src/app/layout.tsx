@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
+import "flag-icons/css/flag-icons.min.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSideBar from "@/components/layout/AppSidebar";
 import { NextIntlClientProvider } from "next-intl";
@@ -20,7 +21,11 @@ export const metadata: Metadata = {
     "Explore the world of short videos with Toptop. Discover, create, and share your favorite moments.",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return <Suspense fallback={null}><LocalizedLayout>{children}</LocalizedLayout></Suspense>;
+}
+
+async function LocalizedLayout({ children }: { children: React.ReactNode }) {
   const messages = await getMessages();
   const locale = await getLocale();
 

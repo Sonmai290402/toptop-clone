@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -19,6 +20,7 @@ type VideoCardProps = { video: VideoPreviewData };
 // });
 
 export default function VideoCard({ video }: VideoCardProps) {
+  const ui = useUiTranslations("ui");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -61,7 +63,7 @@ export default function VideoCard({ video }: VideoCardProps) {
         ) : (
           <Image
             src={video.videoUrl}
-            alt={video.description || "Photo post"}
+            alt={video.description || ui('photo_post')}
             fill
             unoptimized
             sizes="(min-width: 1536px) 17vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"

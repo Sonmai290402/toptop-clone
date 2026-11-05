@@ -43,7 +43,7 @@ const AppSideBar = () => {
       icon: <UserCheck className="w-5! h-5!" />,
     },
     {
-      label: "Upload",
+      label: t("upload"),
       href: "/upload",
       icon: <UploadCloud className="w-5! h-5!" />,
     },

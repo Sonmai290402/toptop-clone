@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function VideoWatch() {
+  const ui = useUiTranslations("ui");
   const { videoId, userId } = useParams<{ videoId: string; userId: string }>();
   const router = useRouter();
   const query = useQuery({
@@ -34,7 +36,7 @@ export default function VideoWatch() {
       }}
     >
       <DialogContent className="h-dvh! max-h-dvh! w-full! max-w-none! gap-0! overflow-hidden rounded-none! bg-background p-0!">
-        <DialogTitle className="sr-only">Watch post</DialogTitle>
+        <DialogTitle className="sr-only">{ui('watch_post')}</DialogTitle>
         {query.isPending ? (
           <p role="status" className="m-auto p-6">
             Loading post...
@@ -46,7 +48,7 @@ export default function VideoWatch() {
               onClick={() => void query.refetch()}
               className="text-primary underline"
             >
-              Try again
+              {ui('try_again')}
             </button>
           </div>
         ) : (
@@ -75,7 +77,7 @@ export default function VideoWatch() {
               </div>
               <aside className="flex min-h-0 min-w-0 flex-col border-l pt-10">
                 <section
-                  aria-label="Post information"
+                  aria-label={ui('post_information')}
                   className="max-h-[30dvh] shrink-0 space-y-3 overflow-y-auto border-b p-4"
                 >
                   <Link

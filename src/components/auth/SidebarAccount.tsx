@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ModeToggle } from "../common/ModeToggle";
+import { LanguageToggle } from "../common/LanguageToggle";
 
 export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
   const t = useTranslations();
@@ -29,7 +30,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
   if (isLoading && !user)
     return (
       <p role="status" className="p-2 text-xs text-muted-foreground">
-        Loading...
+        {t("loading")}
       </p>
     );
   if (!user)
@@ -37,23 +38,23 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
       <div className="space-y-2">
         {error && !collapsed && (
           <div className="text-xs text-muted-foreground">
-            <p>Unable to verify your session.</p>
+            <p>{t("session-error")}</p>
             <button
               type="button"
               className="text-primary"
               onClick={retrySession}
             >
-              Try again
+              {t("try-again")}
             </button>
           </div>
         )}
         <Button
           className="w-full"
-          aria-label="Sign in"
+          aria-label={t("sign-in")}
           size={collapsed ? "icon" : "lg"}
           onClick={() => openAuth()}
         >
-          {collapsed ? <LogIn /> : "Sign in"}
+          {collapsed ? <LogIn /> : t("sign-in")}
         </Button>
         {!collapsed && (
           <Button
@@ -61,9 +62,10 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
             className="w-full"
             onClick={() => openAuth("sign-up")}
           >
-            Sign up
+            {t("sign-up")}
           </Button>
         )}
+        {!collapsed && <><ModeToggle /><LanguageToggle /></>}
       </div>
     );
   return (
@@ -72,7 +74,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
         render={
           <button
             type="button"
-            aria-label="Account"
+            aria-label={t("account")}
             className="flex w-full min-w-0 items-center gap-2 rounded-full bg-accent p-2 text-left"
           />
         }
@@ -115,7 +117,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
         )}
         {user.role === UserRole.ADMIN && (
           <Link className="block text-sm hover:text-primary" href="/admin">
-            Admin
+            {t("admin")}
           </Link>
         )}
         <Link
@@ -126,6 +128,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
         </Link>
 
         <ModeToggle />
+        <LanguageToggle />
 
         <Button
           variant="outline"
@@ -134,7 +137,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
           onClick={logout}
         >
           <LogOut />
-          {isSigningOut ? "Signing out..." : t("logout")}
+          {isSigningOut ? t("signing-out") : t("logout")}
         </Button>
         {signOutError && (
           <p role="alert" className="text-xs text-destructive">

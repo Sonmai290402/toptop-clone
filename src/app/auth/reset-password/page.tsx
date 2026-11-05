@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 function PasswordForm() {
+  const ui = useUiTranslations("ui");
   const { retrySession } = useAuth();
   const [validationError, setValidationError] = useState("");
   const mutation = useMutation({ mutationFn: updatePassword, onSuccess: retrySession });
@@ -18,7 +20,7 @@ function PasswordForm() {
     if (mutation.isPending) return;
     const data = new FormData(event.currentTarget);
     const password = String(data.get("password"));
-    if (password !== data.get("confirmation")) { setValidationError("Passwords do not match."); return; }
+    if (password !== data.get("confirmation")) { setValidationError(ui('passwords_do_not_match')); return; }
     setValidationError("");
     mutation.mutate(password);
   }
@@ -28,7 +30,7 @@ function PasswordForm() {
       <label className="block text-sm">New password<Input name="password" type="password" autoComplete="new-password" minLength={8} maxLength={128} required className="mt-2 h-11" /></label>
       <label className="block text-sm">Confirm password<Input name="confirmation" type="password" autoComplete="new-password" minLength={8} maxLength={128} required className="mt-2 h-11" /></label>
       {(validationError || mutation.error) && <p role="alert" className="text-sm text-destructive">{validationError || mutation.error?.message}</p>}
-      <Button type="submit" disabled={mutation.isPending} className="w-full">{mutation.isPending ? "Updating..." : "Save password"}</Button>
+      <Button type="submit" disabled={mutation.isPending} className="w-full">{mutation.isPending ? ui('updating') : "Save password"}</Button>
     </form>}
   </div>;
 }
