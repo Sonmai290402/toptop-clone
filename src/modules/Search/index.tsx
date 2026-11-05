@@ -58,6 +58,7 @@ export default function Search() {
                 <li key={user.id}>
                   <Link
                     href={`/@${encodeURIComponent(user.username)}`}
+                    aria-label={t("viewProfile", { name: user.displayName })}
                     className="flex gap-4 rounded-xl p-4 hover:bg-accent"
                   >
                     <Avatar size="lg">
@@ -92,7 +93,7 @@ export default function Search() {
                 disabled={query.isFetching}
                 onClick={() => void query.fetchNextPage()}
               >
-                {query.isFetchingNextPage ? t("loading") : t("more")}
+                {query.isFetchingNextPage ? t("loadingMore") : t("more")}
               </Button>
             )}
           </>

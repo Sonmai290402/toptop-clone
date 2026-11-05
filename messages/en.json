@@ -169,6 +169,8 @@
     "error": "Unable to load search results.",
     "retry": "Try again",
     "empty": "No users found.",
-    "more": "Load more"
+    "more": "Load more",
+    "loadingMore": "Loading more users...",
+    "viewProfile": "View profile of {name}"
   }
 }

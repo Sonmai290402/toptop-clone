@@ -169,6 +169,8 @@
     "error": "Không thể tải kết quả tìm kiếm.",
     "retry": "Thử lại",
     "empty": "Không tìm thấy người dùng.",
-    "more": "Xem thêm"
+    "more": "Xem thêm",
+    "loadingMore": "Đang tải thêm người dùng...",
+    "viewProfile": "Xem hồ sơ của {name}"
   }
 }
