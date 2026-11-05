@@ -72,6 +72,10 @@ test("Route Handlers with Supabase HTTP transport stub (no cloud requests)", asy
     const mediaRow = { id: videoId, user_id: userId, storage_path: `${userId}/${videoId}.mp4`, mime_type: "video/mp4", caption: "Upload test", created_at: "2026-10-26T00:00:00Z" };
     if (url.pathname === "/rest/v1/rpc/post_interaction_state") return Response.json({ likeCount: 1, commentCount: 1, isLiked: true, isSaved: true, isFollowing: false });
     if (url.pathname === "/rest/v1/rpc/my_interacted_posts") return Response.json([mediaRow]);
+    if (url.pathname === "/rest/v1/rpc/post_comment_page") {
+      assert.equal(body.p_post_id, videoId);
+      return Response.json([{ id: commentId, postId: videoId, content: "Real comment", createdAt: "2026-10-26T00:00:00Z", author, parentId: null, replyTo: null, replyCount: 0, likeCount: 0, isLiked: false }]);
+    }
     if (url.pathname === "/rest/v1/post_comments") {
       const row = { id: commentId, post_id: videoId, content: body?.content ?? "Real comment", created_at: "2026-10-26T00:00:00Z", author: { id: userId, username: "alice", display_name: "Alice", avatar_url: null } };
       if (request.method === "POST") {

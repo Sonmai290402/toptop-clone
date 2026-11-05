@@ -169,8 +169,17 @@
     "error": "Unable to load search results.",
     "retry": "Try again",
     "empty": "No users found.",
-    "more": "Load more",
-    "loadingMore": "Loading more users...",
-    "viewProfile": "View profile of {name}"
+    "more": "Load more"
+  },
+  "commentThread": {
+    "reply": "Reply",
+    "like": "Like comment",
+    "unlike": "Unlike comment",
+    "view": "View {count} replies",
+    "hide": "Hide replies",
+    "more": "Load more replies",
+    "retry": "Try again",
+    "error": "Unable to update comments. Please try again.",
+    "cancel": "Cancel reply"
   }
 }
