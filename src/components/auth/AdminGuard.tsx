@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { UserRole } from "@/types/role.types";
@@ -15,7 +16,7 @@ export default function AdminGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoading && !error && !allowed) router.replace("/");
   }, [isLoading, error, allowed, router]);
-  if (isLoading) return <p role="status" className="p-6">{ui('checking_admin_access')}</p>;
+  if (isLoading) return <LoadingSkeleton variant="page" />;
   if (error) return <div className="space-y-3 p-6"><p role="alert">{ui('unable_to_verify_admin_access')}</p><Button onClick={retrySession}>{ui('try_again')}</Button></div>;
   if (!allowed) return null;
   return children;

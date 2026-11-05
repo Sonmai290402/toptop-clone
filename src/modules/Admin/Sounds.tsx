@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { UserRole } from "@/types/role.types";
@@ -140,7 +141,7 @@ export default function AdminSounds() {
     </form>
     <section className="space-y-4" aria-label={ui('sound_library')}>
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold">{ui('library')}</h2><input aria-label={ui('search_library')} placeholder={ui('search_title_or_artist')} value={search} maxLength={100} onChange={event => setSearch(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 sm:w-64" /></div>
-      {sounds.isPending && <p role="status">{ui('loading_sounds')}</p>}
+      {sounds.isPending && <LoadingSkeleton variant="comments" />}
       {sounds.isError && <div role="alert"><p>Unable to load the sound library.</p><button onClick={() => void (sounds.isFetchNextPageError ? sounds.fetchNextPage() : sounds.refetch())} className="text-primary underline">{ui('try_again')}</button></div>}
       {sounds.data && !rows.length && <p className="rounded-xl border p-8 text-center text-muted-foreground">{term ? "No matching sounds." : "No sounds yet. Add your first track above."}</p>}
       <div className="grid gap-4 sm:grid-cols-2">{rows.map(sound => <article key={sound.id} className="min-w-0 space-y-3 rounded-xl border bg-card p-4">

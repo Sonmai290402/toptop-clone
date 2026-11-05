@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 
 import { UserRole } from "@/types/role.types";
 import Link from "next/link";
@@ -29,9 +30,7 @@ export default function SidebarAccount({ collapsed }: { collapsed: boolean }) {
   } = useAuth();
   if (isLoading && !user)
     return (
-      <p role="status" className="p-2 text-xs text-muted-foreground">
-        {t("loading")}
-      </p>
+      <LoadingSkeleton variant="account" />
     );
   if (!user)
     return (

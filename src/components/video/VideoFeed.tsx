@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -65,9 +66,7 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
     >
       <audio ref={soundtrackRef} preload="metadata" />
       {query.isPending && (
-        <p role="status" className="p-12 text-center text-muted-foreground">
-          {ui('loading_posts')}
-        </p>
+        <LoadingSkeleton variant="feed" />
       )}
       {query.isError && !query.data && (
         <div role="alert" className="space-y-3 p-12 text-center">

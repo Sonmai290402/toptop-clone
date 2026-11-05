@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useState } from "react";
@@ -93,9 +94,7 @@ export default function ProfileContent({ userId }: { userId: string }) {
         </div>
         <TabsContent value="video" className="space-y-4 pt-4">
           {query.isPending && (
-            <p role="status" className="py-12 text-center">
-              {ui('loading_posts')}
-            </p>
+            <LoadingSkeleton variant="grid" />
           )}
           {query.isError && !query.data && (
             <div role="alert" className="space-y-2 py-12 text-center">
@@ -161,7 +160,7 @@ function InteractedVideos({
   ];
   return (
     <div className="space-y-4">
-      {query.isPending && <p role="status">{ui('loading_posts')}</p>}
+      {query.isPending && <LoadingSkeleton variant="grid" />}
       {query.isError && (
         <div role="alert">
           <p>{ui('unable_to_load_posts')}</p>

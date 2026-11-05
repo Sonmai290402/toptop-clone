@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { Suspense } from "react";
@@ -31,6 +32,6 @@ function OAuthError() {
 }
 
 export default function OAuthErrorPage() {
-  const ui = useUiTranslations("ui");
-  return <main className="min-w-0 flex-1 px-4 py-16"><Suspense fallback={<p role="status">{ui('loading')}</p>}><OAuthError /></Suspense></main>;
+
+  return <main className="min-w-0 flex-1 px-4 py-16"><Suspense fallback={<LoadingSkeleton variant="page" />}><OAuthError /></Suspense></main>;
 }

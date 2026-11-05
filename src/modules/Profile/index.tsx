@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import ProfileHeader from "./Components/ProfileHeader";
@@ -11,9 +12,7 @@ const Profile = ({ username }: { username: string }) => {
 
   if (isPending) {
     return (
-      <p role="status" className="p-6">
-        Loading profile...
-      </p>
+      <LoadingSkeleton variant="profile" />
     );
   }
 

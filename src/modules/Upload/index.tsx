@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useRef, useState } from "react";
@@ -209,7 +210,7 @@ export default function Upload() {
       </form>
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">{ui('your_recent_uploads')}</h2>
-        {posts.isPending && <p>{ui('loading_your_posts')}</p>}
+        {posts.isPending && <LoadingSkeleton variant="grid" />}
         {posts.isError && (
           <div role="alert">
             <p>{ui('unable_to_load_your_uploads')}</p>

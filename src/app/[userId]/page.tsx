@@ -1,3 +1,4 @@
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import Profile from "@/modules/Profile";
 import { Suspense } from "react";
 import ProtectedPage from "@/components/auth/ProtectedPage";
@@ -13,7 +14,7 @@ async function ProfileRoute({ params }: PageProps<"/[userId]">) {
 
 const ProfilePage = (props: PageProps<"/[userId]">) => {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingSkeleton variant="profile" />}>
       <ProfileRoute {...props} />
     </Suspense>
   );

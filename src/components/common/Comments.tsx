@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import RelativeTime from "@/components/common/RelativeTime";
 import { useTranslations as useUiTranslations } from "next-intl";
 
@@ -17,7 +18,7 @@ export default function Comments({ postId, isActive = true }: { postId: string; 
   return <Card aria-label={ui('comments')} tabIndex={-1} className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden py-0">
     <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3"><h2 className="font-semibold">{ui('comments')}{state.data ? ` ${state.data.commentCount}` : ""}</h2></header>
     <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4">
-      {query.isPending && <p role="status" className="text-sm text-muted-foreground">{ui('loading_comments')}</p>}
+      {query.isPending && <LoadingSkeleton variant="comments" />}
       {query.isError && <div role="alert" className="mb-4 space-y-2 text-sm"><p>{query.error.message}</p><Button variant="outline" disabled={query.isFetching} onClick={() => void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch())}>{ui('try_again')}</Button></div>}
       {query.data && !comments.length && <p className="text-sm text-muted-foreground">{ui('no_comments_yet_be_the_first_to_comment')}</p>}
       <div className="space-y-5">{comments.map(comment => <div key={comment.id} className="flex items-start gap-2">

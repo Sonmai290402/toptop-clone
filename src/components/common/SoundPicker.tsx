@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useState } from "react";
@@ -69,7 +70,7 @@ export default function SoundPicker({ value, onChange, mediaType, mediaDuration,
             {previewError && <p role="alert" className="text-sm text-destructive">Unable to load this sound. Try another track.</p>}
           </div>}
           <div className="min-h-0 space-y-2 overflow-y-auto overscroll-contain">
-            {query.isPending && <p role="status">{ui('loading_sounds')}</p>}
+            {query.isPending && <LoadingSkeleton variant="comments" />}
             {query.isError && <div role="alert"><p>{ui('unable_to_load_sounds')}</p><button type="button" className="text-primary" onClick={() => void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch())}>{ui('try_again')}</button></div>}
             {query.data && !tracks.length && <p className="py-6 text-center text-muted-foreground">{term ? ui('no_sounds_match_your_search') : ui('no_sounds_available_yet')}</p>}
             {tracks.map(sound => <div key={sound.id} className="flex items-center gap-3 rounded-lg border p-3">

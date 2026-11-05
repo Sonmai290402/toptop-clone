@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import RelativeTime from "@/components/common/RelativeTime";
 import { useTranslations as useUiTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -39,9 +40,7 @@ export default function VideoWatch() {
       <DialogContent className="h-dvh! max-h-dvh! w-full! max-w-none! gap-0! overflow-hidden rounded-none! bg-background p-0!">
         <DialogTitle className="sr-only">{ui('watch_post')}</DialogTitle>
         {query.isPending ? (
-          <p role="status" className="m-auto p-6">
-            Loading post...
-          </p>
+          <LoadingSkeleton variant="watch" />
         ) : query.isError ? (
           <div role="alert" className="m-auto space-y-4 p-6 text-center">
             <p>{query.error.message}</p>

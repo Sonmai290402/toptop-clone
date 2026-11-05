@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -35,7 +36,7 @@ export default function Search() {
             <p className="text-sm text-muted-foreground mb-4">
               {t("results", { query: q })}
             </p>
-            {query.isPending && <p role="status">{t("loading")}</p>}
+            {query.isPending && <LoadingSkeleton variant="users" />}
             {query.isError && (
               <div role="alert">
                 <p>{t("error")}</p>

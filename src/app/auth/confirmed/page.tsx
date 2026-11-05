@@ -1,4 +1,5 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { Suspense } from "react";
@@ -21,6 +22,6 @@ function ConfirmationResult() {
 }
 
 export default function ConfirmedPage() {
-  const ui = useUiTranslations("ui");
-  return <main className="min-w-0 flex-1"><Suspense fallback={<p>{ui('loading')}</p>}><ConfirmationResult /></Suspense></main>;
+
+  return <main className="min-w-0 flex-1"><Suspense fallback={<LoadingSkeleton variant="page" />}><ConfirmationResult /></Suspense></main>;
 }

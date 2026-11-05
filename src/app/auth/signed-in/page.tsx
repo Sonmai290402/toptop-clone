@@ -1,9 +1,10 @@
 "use client";
+import LoadingSkeleton from "@/components/common/LoadingSkeleton";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,13 +26,7 @@ export default function SignedInPage() {
     <main className="min-w-0 flex-1 px-4 py-16">
       <div className="mx-auto max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 text-center sm:p-8">
         {isLoading ? (
-          <div role="status" className="space-y-4">
-            <LoaderCircle
-              className="mx-auto size-8 animate-spin text-primary"
-              aria-hidden="true"
-            />
-            <p>{ui('checking_your_session')}</p>
-          </div>
+          <LoadingSkeleton variant="page" />
         ) : error ? (
           <>
             <h1 className="text-2xl font-bold">Unable to verify sign-in</h1>
