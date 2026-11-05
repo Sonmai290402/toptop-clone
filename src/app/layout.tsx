@@ -25,27 +25,31 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
 
   return (
-    <html lang={locale} suppressHydrationWarning className={`${manrope.variable} h-full antialiased`}>
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${manrope.variable} h-full antialiased`}
+    >
       <body className="min-h-full p-4">
-        <NextIntlClientProvider messages={messages}>
-          <QueryProvider>
-            <AuthProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NextIntlClientProvider messages={messages}>
+            <QueryProvider>
+              <AuthProvider>
                 <SidebarProvider className="min-h-0">
                   <Suspense fallback={null}>
                     <AppSideBar />
                   </Suspense>
                   {children}
                 </SidebarProvider>
-              </ThemeProvider>
-            </AuthProvider>
-          </QueryProvider>
-        </NextIntlClientProvider>
+              </AuthProvider>
+            </QueryProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
