@@ -1,4 +1,5 @@
 "use client";
+import RelativeTime from "@/components/common/RelativeTime";
 import { useTranslations as useUiTranslations } from "next-intl";
 
 import Link from "next/link";
@@ -21,7 +22,7 @@ export default function Comments({ postId, isActive = true }: { postId: string; 
       {query.data && !comments.length && <p className="text-sm text-muted-foreground">{ui('no_comments_yet_be_the_first_to_comment')}</p>}
       <div className="space-y-5">{comments.map(comment => <div key={comment.id} className="flex items-start gap-2">
         <Link href={`/@${encodeURIComponent(comment.author.username)}`} aria-label={`View ${comment.author.displayName}'s profile`}><Avatar><AvatarImage src={comment.author.avatarUrl ?? undefined} alt={comment.author.displayName} /><AvatarFallback>{comment.author.displayName.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar></Link>
-        <div className="min-w-0 flex-1 wrap-anywhere"><Link href={`/@${encodeURIComponent(comment.author.username)}`} className="text-sm font-semibold">{comment.author.displayName}</Link><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{comment.content}</p><time dateTime={comment.createdAt} className="mt-2 block text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Ho_Chi_Minh" })}</time>
+        <div className="min-w-0 flex-1 wrap-anywhere"><Link href={`/@${encodeURIComponent(comment.author.username)}`} className="text-sm font-semibold">{comment.author.displayName}</Link><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{comment.content}</p><RelativeTime value={comment.createdAt} className="mt-2 block text-xs text-muted-foreground" />
           {/* Reply and comment-like actions are not supported by the post API yet. */}
         </div>
       </div>)}</div>

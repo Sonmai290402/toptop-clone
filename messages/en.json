@@ -151,5 +151,11 @@
     "follow_user": "Follow user",
     "unfollow_user": "Unfollow user",
     "you_have_reached_the_end": "You have reached the end."
+  },
+  "time": {
+    "now": "Now",
+    "minute": "{count}m",
+    "hour": "{count}h",
+    "day": "{count}d"
   }
 }

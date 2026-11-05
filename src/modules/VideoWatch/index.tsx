@@ -1,4 +1,5 @@
 "use client";
+import RelativeTime from "@/components/common/RelativeTime";
 import { useTranslations as useUiTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useParams, useRouter } from "next/navigation";
@@ -103,12 +104,7 @@ export default function VideoWatch() {
                         </p>
                       </div>
 
-                      <time
-                        dateTime={post.createdAt}
-                        className="text-xs text-muted-foreground"
-                      >
-                        {new Date(post.createdAt).toLocaleDateString("vi-VN")}
-                      </time>
+                      <RelativeTime value={post.createdAt} className="text-xs text-muted-foreground" />
                     </div>
                   </Link>
 

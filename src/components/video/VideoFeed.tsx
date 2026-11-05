@@ -110,9 +110,7 @@ export default function VideoFeed({ feed = "for-you" }: { feed?: FeedType }) {
               displayName: video.author.displayName,
               username: video.author.username,
               description: video.caption,
-              time: new Date(video.createdAt).toLocaleDateString("en-GB", {
-                timeZone: "Asia/Ho_Chi_Minh",
-              }),
+              time: video.createdAt,
             }}
           />}
         </section>

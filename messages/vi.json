@@ -151,5 +151,11 @@
     "follow_user": "Theo dõi người dùng",
     "unfollow_user": "Bỏ theo dõi người dùng",
     "you_have_reached_the_end": "Bạn đã xem hết danh sách."
+  },
+  "time": {
+    "now": "Vừa xong",
+    "minute": "{count} phút",
+    "hour": "{count} giờ",
+    "day": "{count} ngày"
   }
 }

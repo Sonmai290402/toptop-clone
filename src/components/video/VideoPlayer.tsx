@@ -1,4 +1,5 @@
 "use client";
+import RelativeTime from "@/components/common/RelativeTime";
 
 import { useRef } from "react";
 import Link from "next/link";
@@ -92,7 +93,7 @@ export default function VideoPlayer({
                 </Link>
                 {info.time && (
                   <p className="ml-2 shrink-0 text-sm text-muted-foreground">
-                    {info.time}
+                    <RelativeTime value={info.time} />
                   </p>
                 )}
               </div>
