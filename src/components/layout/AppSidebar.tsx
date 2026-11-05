@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SidebarAccount from "@/components/auth/SidebarAccount";
 import { useAuth } from "@/providers/AuthProvider";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,7 @@ import { cn } from "cn";
 const AppSideBar = () => {
   const t = useTranslations();
   const pathname = usePathname();
+  const router = useRouter();
   const { state } = useSidebar();
   const { requireAuth, isLoading } = useAuth();
 
@@ -77,19 +78,23 @@ const AppSideBar = () => {
           )}
           <SidebarTrigger />
         </div>
-        <div className="my-8">
+        <form className="my-8" role="search" onSubmit={event => {
+          event.preventDefault();
+          const q = String(new FormData(event.currentTarget).get("q") ?? "").trim();
+          router.push(`/search?q=${encodeURIComponent(q)}`);
+        }}>
           <InputGroup
             className={cn(
               "max-w-xs rounded-full",
               state === "expanded" && "py-6 px-2",
             )}
           >
-            <InputGroupInput placeholder={t("search")} />
+            <InputGroupInput name="q" maxLength={100} placeholder={t("search")} aria-label={t("search")} />
             <InputGroupAddon>
-              <Search />
+              <button type="submit" aria-label={t("search")} className="pointer-events-auto"><Search /></button>
             </InputGroupAddon>
           </InputGroup>
-        </div>
+        </form>
 
         <SidebarMenu>
           {MENU_ITEMS.map((item) => (

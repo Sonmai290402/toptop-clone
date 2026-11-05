@@ -157,5 +157,18 @@
     "minute": "{count}m",
     "hour": "{count}h",
     "day": "{count}d"
+  },
+  "userSearch": {
+    "title": "Search users",
+    "placeholder": "Username or display name",
+    "submit": "Search",
+    "prompt": "Enter a username or display name to search.",
+    "tooLong": "Use at most 100 characters.",
+    "results": "Results for “{query}”",
+    "loading": "Searching...",
+    "error": "Unable to load search results.",
+    "retry": "Try again",
+    "empty": "No users found.",
+    "more": "Load more"
   }
 }

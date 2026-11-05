@@ -157,5 +157,18 @@
     "minute": "{count} phút",
     "hour": "{count} giờ",
     "day": "{count} ngày"
+  },
+  "userSearch": {
+    "title": "Tìm người dùng",
+    "placeholder": "Tên người dùng hoặc tên hiển thị",
+    "submit": "Tìm kiếm",
+    "prompt": "Nhập tên người dùng hoặc tên hiển thị để tìm kiếm.",
+    "tooLong": "Nhập tối đa 100 ký tự.",
+    "results": "Kết quả cho “{query}”",
+    "loading": "Đang tìm kiếm...",
+    "error": "Không thể tải kết quả tìm kiếm.",
+    "retry": "Thử lại",
+    "empty": "Không tìm thấy người dùng.",
+    "more": "Xem thêm"
   }
 }
