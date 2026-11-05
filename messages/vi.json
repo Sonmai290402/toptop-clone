@@ -170,5 +170,16 @@
     "retry": "Thử lại",
     "empty": "Không tìm thấy người dùng.",
     "more": "Xem thêm"
+  },
+  "commentThread": {
+    "reply": "Trả lời",
+    "like": "Thích bình luận",
+    "unlike": "Bỏ thích bình luận",
+    "view": "Xem {count} câu trả lời",
+    "hide": "Ẩn câu trả lời",
+    "more": "Xem thêm câu trả lời",
+    "retry": "Thử lại",
+    "error": "Không thể cập nhật bình luận. Vui lòng thử lại.",
+    "cancel": "Hủy trả lời"
   }
 }
