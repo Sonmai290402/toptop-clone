@@ -72,6 +72,7 @@ export default function Comments({
         <div className="space-y-5">
           {comments.map((comment) => (
             <CommentThread
+              replyingToId={replyTo?.postId === postId ? replyTo.id : undefined}
               key={comment.id}
               comment={comment}
               onReply={setReplyTo}

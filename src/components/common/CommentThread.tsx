@@ -16,10 +16,12 @@ import { Button } from "../ui/button";
 export default function CommentThread({
   comment,
   onReply,
+  replyingToId,
   child = false,
 }: {
   comment: PostComment;
   onReply: (comment: PostComment) => void;
+  replyingToId?: string;
   child?: boolean;
 }) {
   const t = useTranslations("commentThread");
@@ -44,7 +46,10 @@ export default function CommentThread({
   ];
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-2">
+      <div
+        data-replying={replyingToId === comment.id || undefined}
+        className="flex items-start gap-2 rounded-lg p-2 transition-colors duration-200 data-[replying=true]:bg-primary/10 data-[replying=true]:ring-1 data-[replying=true]:ring-primary/20 motion-reduce:transition-none"
+      >
         <Link href={`/@${encodeURIComponent(comment.author.username)}`}>
           <Avatar>
             <AvatarImage
@@ -137,6 +142,7 @@ export default function CommentThread({
                   key={reply.id}
                   comment={reply}
                   onReply={onReply}
+                  replyingToId={replyingToId}
                   child
                 />
               ))}
