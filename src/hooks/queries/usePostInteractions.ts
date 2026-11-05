@@ -69,7 +69,7 @@ export function useCreatePostComment(postId: string) {
 export function useMyInteractedPosts(kind: "liked" | "saved", enabled: boolean) {
   const { user, isLoading } = useAuth();
   return useInfiniteQuery({
-    queryKey: ["my-interacted-posts", user?.id, kind],
+    queryKey: ["my-interacted-posts", user?.id, kind, "with-author"],
     queryFn: ({ pageParam, signal }) => apiFetch<PostPage>(`/me/${kind}-posts?offset=${pageParam}&limit=20`, { signal }),
     initialPageParam: 0,
     getNextPageParam: page => page.pagination.nextOffset ?? undefined,

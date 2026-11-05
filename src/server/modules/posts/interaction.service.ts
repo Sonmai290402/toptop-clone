@@ -1,3 +1,4 @@
+import { attachPostAuthors } from "./post.service";
 import "server-only";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -43,5 +44,5 @@ export async function listInteractedPosts(db: SupabaseClient, kind: "liked" | "s
   const { data, error } = await db.rpc("my_interacted_posts", { p_kind: kind, p_limit: input.limit + 1, p_offset: input.offset });
   if (error) databaseError(error);
   const rows = z.array(z.object({ ...postSoundFields, id: z.uuid(), user_id: z.uuid(), mime_type: z.string(), storage_path: z.string(), caption: z.string(), created_at: z.string() })).parse(data);
-  return { data: await postDtos(db, rows.slice(0, input.limit)), pagination: { hasMore: rows.length > input.limit, nextOffset: rows.length > input.limit ? input.offset + input.limit : null } };
+  return { data: await attachPostAuthors(db, await postDtos(db, rows.slice(0, input.limit))), pagination: { hasMore: rows.length > input.limit, nextOffset: rows.length > input.limit ? input.offset + input.limit : null } };
 }

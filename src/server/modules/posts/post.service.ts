@@ -5,7 +5,7 @@ import { ApiError, databaseError } from "@/server/shared/errors";
 import { postDtos } from "../uploads/upload.service";
 import { soundColumns } from "@/lib/sounds";
 import { getProfile } from "../users/user.service";
-import type { MediaPostWithAuthor } from "@/lib/uploads";
+import type { MediaPost, MediaPostWithAuthor } from "@/lib/uploads";
 
 export const postListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -24,6 +24,19 @@ export async function listPosts(db: SupabaseClient, input: z.infer<typeof postLi
   if (error) databaseError(error);
   const hasMore = data.length > input.limit;
   const posts = await postDtos(db, data.slice(0, input.limit));
+  return { data: await attachPostAuthors(db, posts), pagination: { hasMore, nextOffset: hasMore ? input.offset + input.limit : null } };
+}
+
+export async function getPost(db: SupabaseClient, id: string) {
+  const { data, error } = await db.from("media_posts").select(columns).eq("id", id).not("published_at", "is", null).maybeSingle();
+  if (error) databaseError(error);
+  if (!data) throw new ApiError(404, "POST_NOT_FOUND", "Post not found.");
+  const profile = await getProfile(db, data.user_id);
+  const author = { id: profile.id, username: profile.username, displayName: profile.displayName, avatarUrl: profile.avatarUrl };
+  return { ...(await postDtos(db, [data]))[0], author };
+}
+
+export async function attachPostAuthors(db: SupabaseClient, posts: MediaPost[]): Promise<MediaPostWithAuthor[]> {
   const authorIds = [...new Set(posts.map(post => post.userId))];
   const authors = authorIds.length
     ? await db.from("profiles").select("id,username,display_name,avatar_url").in("id", authorIds)
@@ -35,14 +48,5 @@ export async function listPosts(db: SupabaseClient, input: z.infer<typeof postLi
     if (!author) throw new ApiError(503, "AUTHOR_UNAVAILABLE", "Unable to load the post author.");
     return { ...post, author: { id: author.id, username: author.username, displayName: author.display_name, avatarUrl: author.avatar_url } };
   });
-  return { data: items, pagination: { hasMore, nextOffset: hasMore ? input.offset + input.limit : null } };
-}
-
-export async function getPost(db: SupabaseClient, id: string) {
-  const { data, error } = await db.from("media_posts").select(columns).eq("id", id).not("published_at", "is", null).maybeSingle();
-  if (error) databaseError(error);
-  if (!data) throw new ApiError(404, "POST_NOT_FOUND", "Post not found.");
-  const profile = await getProfile(db, data.user_id);
-  const author = { id: profile.id, username: profile.username, displayName: profile.displayName, avatarUrl: profile.avatarUrl };
-  return { ...(await postDtos(db, [data]))[0], author };
+  return items;
 }
