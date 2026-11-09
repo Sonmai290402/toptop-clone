@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Sound } from "@/lib/sounds";
 import { ApiError, databaseError } from "@/server/shared/errors";
+import { cachedSoundPage } from "@/server/cache/sounds";
 
 export const soundListSchema = z.object({
   q: z.string().trim().max(100).default(""),
@@ -15,6 +16,12 @@ export function soundDto(db: SupabaseClient, row: SoundRow): Sound {
   return { id: row.id, title: row.title, artist: row.artist, durationMs: row.duration_ms, audioUrl: db.storage.from("sounds").getPublicUrl(row.storage_path).data.publicUrl };
 }
 export async function listSounds(db: SupabaseClient, input: z.infer<typeof soundListSchema>) {
+  if (!input.q && input.offset === 0 && input.limit === 20) {
+    return cachedSoundPage(() => loadSounds(db, input));
+  }
+  return loadSounds(db, input);
+}
+async function loadSounds(db: SupabaseClient, input: z.infer<typeof soundListSchema>) {
   let query = db.from("sounds").select(columns).eq("is_active", true);
   // Search one generated column, keeping user input out of PostgREST filter syntax.
   if (input.q) query = query.ilike("search_text", `%${input.q.replace(/[\\%_]/g, "\\$&")}%`);

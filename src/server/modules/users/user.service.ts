@@ -4,6 +4,7 @@ import type { z } from "zod";
 import { ApiError, databaseError } from "../../shared/errors";
 import { profileDto } from "../contracts";
 import type { updateProfileSchema } from "./user.schema";
+import { invalidateDiscovery } from "@/server/cache/discovery";
 
 export async function getProfile(db: SupabaseClient, id: string) {
   const { data, error } = await db.rpc("api_profile", { p_user_id: id });
@@ -27,5 +28,6 @@ export async function updateProfile(db: SupabaseClient, id: string, input: z.inf
   const { data, error } = await db.from("profiles").update(updates).eq("id", id).select("id").maybeSingle();
   if (error) databaseError(error);
   if (!data) throw new ApiError(404, "USER_NOT_FOUND", "User not found.");
+  await invalidateDiscovery();
   return getProfile(db, id);
 }

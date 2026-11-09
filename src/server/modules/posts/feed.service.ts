@@ -5,6 +5,7 @@ import { databaseError } from "@/server/shared/errors";
 import { postDtos } from "../uploads/upload.service";
 import { postSoundFields } from "@/lib/sounds";
 import { decodeCursor, encodeCursor } from "@/server/shared/pagination";
+import { cachedDiscovery } from "@/server/cache/discovery";
 
 export const feedSchema = z.object({
   feed: z.enum(["for-you", "following"]).default("for-you"),
@@ -19,12 +20,18 @@ const feedRow = z.object({
 export async function listVideoFeed(db: SupabaseClient, input: z.infer<typeof feedSchema>) {
   const context = `media-feed:${input.feed}`;
   const cursor = decodeCursor(input.cursor, context, z.object({ createdAt: z.iso.datetime({ offset: true }), id: z.uuid() }).strict());
-  const { data, error } = await db.rpc("media_post_feed", {
-    p_feed: input.feed, p_limit: input.limit + 1,
-    p_before_created_at: cursor?.createdAt ?? null, p_before_id: cursor?.id ?? null,
-  });
-  if (error) databaseError(error);
-  const rows = z.array(feedRow).parse(data);
+  const load = async () => {
+    const { data, error } = await db.rpc("media_post_feed", {
+      p_feed: input.feed, p_limit: input.limit + 1,
+      p_before_created_at: cursor?.createdAt ?? null, p_before_id: cursor?.id ?? null,
+    });
+    if (error) databaseError(error);
+    return z.array(feedRow).parse(data);
+  };
+  // Only this public, viewer-independent feed page is shared. Following stays live.
+  const rows = input.feed === "for-you" && !input.cursor && input.limit === 10
+    ? await cachedDiscovery("feed:first:10", z.array(feedRow), load)
+    : await load();
   const hasMore = rows.length > input.limit;
   const page = rows.slice(0, input.limit);
   const posts = await postDtos(db, page);

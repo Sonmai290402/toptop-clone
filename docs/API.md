@@ -1,5 +1,11 @@
 # Backend API — Toptop
 
+Redis caches selected public discovery pages and applies distributed action limits.
+See [Redis setup, cache freshness and rate-limit policies](./REDIS.md).
+Limited requests return `429 RATE_LIMITED` with a `Retry-After` header in seconds.
+When Redis rate limiting is unavailable, protected email-auth and upload actions
+return `503 RATE_LIMIT_UNAVAILABLE`; ordinary cache reads fall back to Supabase.
+
 Admin-only sound uploads and role setup: [Admin API](./ADMIN.md).
 
 Sound library, per-post soundtrack selection and manual Supabase setup:

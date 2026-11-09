@@ -4,6 +4,7 @@ import { ApiError, databaseError } from "@/server/shared/errors";
 import type { MediaPost } from "@/lib/uploads";
 import type { Sound, SoundSelection } from "@/lib/sounds";
 import { getSoundMap } from "../sounds/sound.service";
+import { invalidateDiscovery } from "@/server/cache/discovery";
 
 type PostRow = { id: string; user_id: string; mime_type: string; storage_path: string; caption: string; created_at: string; sound_id?: string | null; sound_start_ms?: number; sound_duration_ms?: number | null; music_volume?: number; original_volume?: number };
 export function postDto(db: SupabaseClient, row: PostRow, sound?: Sound): MediaPost {
@@ -34,5 +35,6 @@ export async function publishUpload(db: SupabaseClient, id: string, caption: str
   if (error?.code === "P0001") throw new ApiError(400, "INVALID_SOUND", "The sound is unavailable or the selected segment is invalid. Choose a sound again.");
   if (error?.code === "22023") throw new ApiError(400, "UPLOAD_INCOMPLETE", "The uploaded file is missing or does not match. Select the file again and retry.");
   if (error) databaseError(error);
+  await invalidateDiscovery();
   return (await postDtos(db, [data]))[0];
 }

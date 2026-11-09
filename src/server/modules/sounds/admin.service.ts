@@ -4,6 +4,7 @@ import type { z } from "zod";
 import { soundUploadSchema, type SoundDetails } from "@/lib/admin-sounds";
 import { ApiError, databaseError } from "@/server/shared/errors";
 import { soundDto, soundListSchema } from "./sound.service";
+import { invalidateSoundPage } from "@/server/cache/sounds";
 
 export async function listAdminSounds(db: SupabaseClient, input: z.infer<typeof soundListSchema>) {
   // Check the database role too, so a revoked admin's cached token cannot grant access.
@@ -30,5 +31,6 @@ export async function completeSoundUpload(db: SupabaseClient, id: string, input:
   const { data, error } = await db.rpc("publish_admin_sound", { p_id: id, p_title: input.title, p_artist: input.artist, p_duration_ms: input.durationMs });
   if (error?.code === "22023") throw new ApiError(400, "UPLOAD_INCOMPLETE", "The sound file or its details are invalid. Select the file again and retry.");
   if (error) databaseError(error);
+  await invalidateSoundPage();
   return { ...soundDto(db, data), isActive: data.is_active, createdAt: data.created_at };
 }

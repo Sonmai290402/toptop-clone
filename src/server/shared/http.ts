@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createRequestClient } from "@/lib/supabase/server";
 import { getConfig } from "../config";
 import { ApiError } from "./errors";
+import { enforceRequestLimit, RateLimitError } from "@/server/cache/rate-limit";
 
 export type ApiContext = { db: SupabaseClient; user: User | null; token?: string };
 type Result = { data?: unknown; pagination?: unknown; status?: number };
@@ -35,6 +36,8 @@ export function api(
         throw new ApiError(400, "COOKIE_AUTH_REQUIRED", "This endpoint uses cookies; do not send an Authorization header.");
       }
       assertOrigin(request, config.origin, authorization !== null && !options.cookieOnly);
+      // Public auth actions are limited before contacting Supabase Auth.
+      if (options.auth === "none") await enforceRequestLimit(request);
       client = createRequestClient(request);
       let db = client.supabase;
       let user: User | null = null;
@@ -56,6 +59,7 @@ export function api(
           throw new ApiError(401, "UNAUTHENTICATED", "Please sign in.");
         }
       }
+      if (options.auth !== "none") await enforceRequestLimit(request, user?.id);
       const result = await handler(request, { db, user, token: client.token });
       const { status = 200, ...body } = result;
       response = status === 204 ? new NextResponse(null, { status }) : NextResponse.json(body, { status });
@@ -65,6 +69,7 @@ export function api(
         : new ApiError(500, "INTERNAL_ERROR", "An internal server error occurred.");
       if (!(error instanceof ApiError)) console.error("API failed", error instanceof Error ? error.name : "UnknownError");
       response = NextResponse.json({ error: { code: failure.code, message: failure.message, ...(failure.details ? { details: failure.details } : {}) } }, { status: failure.status });
+      if (error instanceof RateLimitError) response.headers.set("Retry-After", String(error.retryAfter));
     }
     response.headers.set("Cache-Control", "private, no-store");
     response.headers.set("Vary", "Cookie, Authorization");
