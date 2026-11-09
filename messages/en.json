@@ -150,7 +150,10 @@
     "save_post": "Save post",
     "follow_user": "Follow user",
     "unfollow_user": "Unfollow user",
-    "you_have_reached_the_end": "You have reached the end."
+    "you_have_reached_the_end": "You have reached the end.",
+    "email_already_registered": "This email is already registered. Sign in with your existing email or Google account.",
+    "confirm_password": "Confirm password",
+    "registration_unavailable": "Unable to confirm registration. Please try again."
   },
   "time": {
     "now": "Now",

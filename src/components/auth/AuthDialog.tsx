@@ -21,6 +21,7 @@ export default function AuthDialog({ open, mode, reason, onClose, onModeChange }
   const { completeSignIn } = useAuth();
   const google = useGoogleSignIn();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -43,8 +44,10 @@ export default function AuthDialog({ open, mode, reason, onClose, onModeChange }
         : await signIn(input);
       if (result.data.session && result.data.user) {
         await completeSignIn(result.data.user);
-      } else {
+      } else if (isSignup && result.data.requiresEmailConfirmation && result.data.user) {
         setMessage("Check your inbox and confirm your email to complete registration, then sign in.");
+      } else {
+        throw new Error(ui('registration_unavailable'));
       }
     },
   });
@@ -57,12 +60,14 @@ export default function AuthDialog({ open, mode, reason, onClose, onModeChange }
     },
   });
   const busy = submit.isPending || resend.isPending || google.isRedirecting;
+  const emailTaken = isSignup && submit.error instanceof ApiClientError && submit.error.code === "EMAIL_ALREADY_REGISTERED";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     const form = new FormData(event.currentTarget);
     setValidationError("");
+    setMessage("");
     google.reset();
     if (isSignup && form.get("password") !== form.get("confirmPassword")) {
       setValidationError(ui('passwords_do_not_match'));
@@ -111,7 +116,8 @@ export default function AuthDialog({ open, mode, reason, onClose, onModeChange }
                   </label>
                 </>}
                 <label className="block space-y-2 text-sm">{ui('email')}
-                  <Input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="you@example.com" className="mt-2 h-11" />
+                  <Input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="you@example.com" className="mt-2 h-11" aria-invalid={emailTaken} aria-describedby={emailTaken ? "auth-email-error" : undefined} onChange={() => { if (emailTaken) submit.reset(); }} />
+                  {emailTaken && <span id="auth-email-error" role="alert" className="block text-sm text-destructive">{ui('email_already_registered')}</span>}
                 </label>
                 {!isForgot && <>
                   <label className="block text-sm" htmlFor="auth-password">{ui('password')}</label>
@@ -119,12 +125,16 @@ export default function AuthDialog({ open, mode, reason, onClose, onModeChange }
                     <Input id="auth-password" name="password" type={showPassword ? "text" : "password"} autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : 1} maxLength={128} placeholder={isSignup ? ui('at_least_8_characters') : ui('enter_your_password')} className="h-11 pr-12" />
                     <Button type="button" variant="ghost" size="icon" aria-label={showPassword ? ui('hide_password') : ui('show_password')} aria-pressed={showPassword} className="absolute right-1 top-1.5" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff /> : <Eye />}</Button>
                   </div>
-                  {isSignup && <label className="block text-sm">Confirm password
-                    <Input name="confirmPassword" type={showPassword ? "text" : "password"} autoComplete="new-password" required minLength={8} maxLength={128} className="mt-2 h-11" />
-                  </label>}
+                  {isSignup && <>
+                    <label htmlFor="auth-confirm-password" className="block text-sm">{ui('confirm_password')}</label>
+                    <div className="relative">
+                      <Input id="auth-confirm-password" name="confirmPassword" type={showConfirmPassword ? "text" : "password"} autoComplete="new-password" required minLength={8} maxLength={128} placeholder={ui('confirm_password')} className="h-11 pr-12" />
+                      <Button type="button" variant="ghost" size="icon" aria-label={showConfirmPassword ? ui('hide_password') : ui('show_password')} aria-pressed={showConfirmPassword} className="absolute right-1 top-1.5" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <EyeOff /> : <Eye />}</Button>
+                    </div>
+                  </>}
                 </>}
               </fieldset>
-              {(validationError || submit.error) && <p role="alert" className="text-sm text-destructive">{validationError || submit.error?.message}</p>}
+              {(validationError || (submit.error && !emailTaken)) && <p role="alert" className="text-sm text-destructive">{validationError || submit.error?.message}</p>}
               {submit.error instanceof ApiClientError && submit.error.code === "EMAIL_NOT_CONFIRMED" && (
                 <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => resend.mutate()}>{ui('resend_confirmation_email')}</Button>
               )}
