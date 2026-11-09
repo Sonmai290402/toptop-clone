@@ -32,6 +32,7 @@ export default function ProfileContent({ userId }: { userId: string }) {
     ).values(),
   ];
   const videos = posts.map((post) => ({
+    post,
     id: post.id,
     mediaType: post.mediaType,
     videoUrl: post.mediaUrl,
@@ -179,6 +180,7 @@ function InteractedVideos({
       {query.data && (
         <VideoGrid
           videos={posts.map((post) => ({
+            post,
             id: post.id,
             username: post.author.username,
             mediaType: post.mediaType,

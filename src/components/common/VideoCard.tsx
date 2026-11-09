@@ -6,11 +6,13 @@ import Image from "next/image";
 import { ImageOff, Pause, Play, VideoOff } from "lucide-react";
 import type { VideoData } from "@/types/video.types";
 import Link from "next/link";
+import PostActionsMenu, { type EditablePost } from "./PostActionsMenu";
 
 export type VideoPreviewData = Omit<VideoData, "isPinned" | "viewCount"> &
   Partial<Pick<VideoData, "isPinned" | "viewCount">> & {
     mediaType: "video" | "image";
     username: string;
+    post?: EditablePost;
   };
 type VideoCardProps = { video: VideoPreviewData };
 
@@ -48,8 +50,9 @@ export default function VideoCard({ video }: VideoCardProps) {
 
   if (video.mediaType === "image") {
     return (
+      <div className="relative">
       <Link
-        className="group relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted"
+        className="group relative block aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted"
         href={`/@${video.username}/video/${video.id}`}
       >
         {hasError ? (
@@ -72,10 +75,13 @@ export default function VideoCard({ video }: VideoCardProps) {
           />
         )}
       </Link>
+      {video.post && <div className="absolute right-2 top-2"><PostActionsMenu post={video.post} /></div>}
+      </div>
     );
   }
 
   return (
+    <div className="relative">
     <Link
       type="button"
       aria-label={`Preview video: ${video.description}`}
@@ -143,5 +149,7 @@ export default function VideoCard({ video }: VideoCardProps) {
       </span>
       */}
     </Link>
+    {video.post && <div className="absolute right-2 top-2"><PostActionsMenu post={video.post} /></div>}
+    </div>
   );
 }

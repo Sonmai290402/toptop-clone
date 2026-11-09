@@ -184,5 +184,21 @@
     "retry": "Thử lại",
     "error": "Không thể cập nhật bình luận. Vui lòng thử lại.",
     "cancel": "Hủy trả lời"
+  },
+  "postActions": {
+    "menu": "Thao tác bài đăng",
+    "edit": "Chỉnh sửa bài đăng",
+    "delete": "Xóa bài đăng",
+    "discard": "Bỏ các thay đổi chưa lưu?",
+    "conflict": "Bài đăng đã thay đổi. Đóng và mở lại để tải nội dung mới nhất.",
+    "error": "Không thể thực hiện thao tác. Vui lòng thử lại.",
+    "confirmDelete": "Xóa bài đăng và các bình luận? Không thể hoàn tác.",
+    "captionOnly": "Chỉnh sửa mô tả. Ảnh, video và âm thanh được giữ nguyên.",
+    "caption": "Mô tả",
+    "invalidCaption": "Nhập tối đa 2.200 ký tự.",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "deleting": "Đang xóa..."
   }
 }

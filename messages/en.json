@@ -184,5 +184,21 @@
     "retry": "Try again",
     "error": "Unable to update comments. Please try again.",
     "cancel": "Cancel reply"
+  },
+  "postActions": {
+    "menu": "Post actions",
+    "edit": "Edit post",
+    "delete": "Delete post",
+    "discard": "Discard unsaved changes?",
+    "conflict": "This post has changed. Close and reopen the editor to load the latest caption.",
+    "error": "Unable to complete this action. Please try again.",
+    "confirmDelete": "Delete this post and its comments? This cannot be undone.",
+    "captionOnly": "Edit your caption. Media and sound will remain unchanged.",
+    "caption": "Caption",
+    "invalidCaption": "Use up to 2,200 characters.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "deleting": "Deleting..."
   }
 }

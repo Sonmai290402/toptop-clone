@@ -12,6 +12,7 @@ import Comments from "@/components/common/Comments";
 import ExpandableCaption from "@/components/common/ExpandableCaption";
 import { getProfileUsername } from "@/lib/auth/protected-paths";
 import Link from "next/link";
+import PostActionsMenu from "@/components/common/PostActionsMenu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function VideoWatch() {
@@ -38,7 +39,7 @@ export default function VideoWatch() {
       }}
     >
       <DialogContent className="h-dvh! max-h-dvh! w-full! max-w-none! gap-0! overflow-hidden rounded-none! bg-background p-0!">
-        <DialogTitle className="sr-only">{ui('watch_post')}</DialogTitle>
+        <DialogTitle className="sr-only">{ui("watch_post")}</DialogTitle>
         {query.isPending ? (
           <LoadingSkeleton variant="watch" />
         ) : query.isError ? (
@@ -48,7 +49,7 @@ export default function VideoWatch() {
               onClick={() => void query.refetch()}
               className="text-primary underline"
             >
-              {ui('try_again')}
+              {ui("try_again")}
             </button>
           </div>
         ) : (
@@ -77,35 +78,41 @@ export default function VideoWatch() {
               </div>
               <aside className="flex min-h-0 min-w-0 flex-col border-l pt-10">
                 <section
-                  aria-label={ui('post_information')}
+                  aria-label={ui("post_information")}
                   className="max-h-[30dvh] shrink-0 space-y-3 overflow-y-auto border-b p-4"
                 >
-                  <Link
-                    href={`/@${encodeURIComponent(post.author.username)}`}
-                    className="flex gap-2"
-                  >
-                    <Avatar size="lg">
-                      <AvatarImage src={post.author.avatarUrl ?? undefined} />
-                      <AvatarFallback>
-                        {post.author.displayName.slice(0, 3)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex gap-2 items-center">
-                        <p className="font-semibold">
-                          {post.author.displayName}
-                        </p>
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={`/@${encodeURIComponent(post.author.username)}`}
+                      className="flex gap-2"
+                    >
+                      <Avatar size="lg">
+                        <AvatarImage src={post.author.avatarUrl ?? undefined} />
+                        <AvatarFallback>
+                          {post.author.displayName.slice(0, 3)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex gap-2 items-center">
+                          <p className="font-semibold">
+                            {post.author.displayName}
+                          </p>
 
-                        {"·"}
+                          {"·"}
 
-                        <p className="text-sm text-muted-foreground">
-                          @{post.author.username}
-                        </p>
+                          <p className="text-sm text-muted-foreground">
+                            @{post.author.username}
+                          </p>
+                        </div>
+
+                        <RelativeTime
+                          value={post.createdAt}
+                          className="text-xs text-muted-foreground"
+                        />
                       </div>
-
-                      <RelativeTime value={post.createdAt} className="text-xs text-muted-foreground" />
-                    </div>
-                  </Link>
+                    </Link>
+                    <PostActionsMenu post={post} />
+                  </div>
 
                   <ExpandableCaption text={post.caption} />
                   {post.soundtrack && (

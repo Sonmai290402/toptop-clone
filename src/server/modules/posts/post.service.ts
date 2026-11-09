@@ -6,6 +6,33 @@ import { postDtos } from "../uploads/upload.service";
 import { soundColumns } from "@/lib/sounds";
 import { getProfile } from "../users/user.service";
 import type { MediaPost, MediaPostWithAuthor } from "@/lib/uploads";
+import { invalidateDiscovery } from "@/server/cache/discovery";
+import { editPostSchema } from "@/lib/post-edit";
+
+export async function editPost(db: SupabaseClient, id: string, input: z.infer<typeof editPostSchema>) {
+  const { error } = await db.rpc("edit_post_caption", { p_id: id, p_caption: input.caption, p_expected_caption: input.expectedCaption });
+  if (error?.code === "40001") throw new ApiError(409, "POST_CHANGED", "This post has changed. Reopen the editor and try again.");
+  if (error?.code === "P0002") throw new ApiError(404, "POST_NOT_FOUND", "Post not found.");
+  if (error) databaseError(error);
+  await invalidateDiscovery();
+  return getPost(db, id);
+}
+
+export async function deletePost(db: SupabaseClient, id: string) {
+  const { data: path, error } = await db.rpc("delete_owned_post", { p_id: id });
+  if (error?.code === "P0002") throw new ApiError(404, "POST_NOT_FOUND", "Post not found.");
+  if (error) databaseError(error);
+  await invalidateDiscovery();
+  if (!path) return { cleanupPending: false };
+  try {
+    const removed = await db.storage.from("posts").remove([path]);
+    if (removed.error) return { cleanupPending: true };
+    const cleared = await db.from("post_file_cleanup").delete().eq("post_id", id);
+    return { cleanupPending: !!cleared.error };
+  } catch {
+    return { cleanupPending: true };
+  }
+}
 
 export const postListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
