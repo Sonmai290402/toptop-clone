@@ -51,7 +51,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
       <section className="flex gap-6 items-center ">
         <button
           type="button"
-          aria-label={isOwner ? ui('update_avatar') : ui('view_avatar')}
+          aria-label={isOwner ? ui("update_avatar") : ui("view_avatar")}
           className={cn(
             "relative rounded-full overflow-hidden",
             isOwner &&
@@ -83,17 +83,24 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
               <span className="font-bold text-primary">
                 {userData.followingCount}
               </span>
-              <span>{ui('following')}</span>
+              <span>{ui("following")}</span>
             </div>
             <div className="flex gap-2">
               <span className="font-bold text-primary">
                 {userData.followerCount}
               </span>
-              <span>{ui('follower')}</span>
+              <span>{ui("follower")}</span>
             </div>
           </div>
           <div className="flex gap-4">
             <Button
+              variant={
+                isOwner
+                  ? "default"
+                  : userData.isFollowing
+                    ? "secondary"
+                    : "default"
+              }
               disabled={isLoading || followingBusy}
               aria-pressed={isOwner ? undefined : userData.isFollowing}
               onClick={() => {
@@ -112,17 +119,17 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
               className="h-10"
             >
               {isOwner
-                ? ui('edit_profile')
+                ? ui("edit_profile")
                 : followingBusy
-                  ? ui('updating')
+                  ? ui("updating")
                   : userData.isFollowing
-                    ? ui('unfollow')
-                    : ui('follow')}
+                    ? ui("unfollow")
+                    : ui("follow")}
             </Button>
             {isOwner && (
               <Button
                 variant="secondary"
-                aria-label={ui('profile_settings')}
+                aria-label={ui("profile_settings")}
                 onClick={() => requireAuth()}
                 className="h-10 px-3"
               >
@@ -152,7 +159,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
           className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
           showCloseButton={!updateProfile.isPending}
         >
-          <DialogTitle>{ui('edit_profile')}</DialogTitle>
+          <DialogTitle>{ui("edit_profile")}</DialogTitle>
           <form
             className="space-y-5"
             noValidate
@@ -169,7 +176,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
             <fieldset disabled={updateProfile.isPending}>
               <FieldGroup>
                 <Field>
-                  <Label htmlFor="profile-name">{ui('name')}</Label>
+                  <Label htmlFor="profile-name">{ui("name")}</Label>
                   <Input
                     id="profile-name"
                     {...form.register("displayName")}
@@ -191,7 +198,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
                   )}
                 </Field>
                 <Field>
-                  <Label htmlFor="profile-bio">{ui('bio')}</Label>
+                  <Label htmlFor="profile-bio">{ui("bio")}</Label>
                   <textarea
                     id="profile-bio"
                     {...form.register("bio")}
@@ -230,10 +237,10 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
                 disabled={updateProfile.isPending}
                 onClick={() => setIsEditModalOpen(false)}
               >
-                {ui('cancel')}
+                {ui("cancel")}
               </Button>
               <Button type="submit" disabled={updateProfile.isPending}>
-                {updateProfile.isPending ? ui('saving') : ui('save')}
+                {updateProfile.isPending ? ui("saving") : ui("save")}
               </Button>
             </div>
           </form>
