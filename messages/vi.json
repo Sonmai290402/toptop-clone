@@ -183,7 +183,13 @@
     "more": "Xem thêm câu trả lời",
     "retry": "Thử lại",
     "error": "Không thể cập nhật bình luận. Vui lòng thử lại.",
-    "cancel": "Hủy trả lời"
+    "cancel": "Hủy trả lời",
+    "delete": "Xóa",
+    "deleting": "Đang xóa...",
+    "confirmDelete": "Xóa bình luận này? Không thể hoàn tác.",
+    "confirmDeleteThread": "Xóa bình luận này và tất cả trả lời bên dưới? Không thể hoàn tác.",
+    "deleteTitle": "Xóa bình luận",
+    "cancelDelete": "Hủy"
   },
   "postActions": {
     "menu": "Thao tác bài đăng",

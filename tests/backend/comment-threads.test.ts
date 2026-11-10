@@ -17,7 +17,7 @@ test("comment replies stay one level deep and likes enforce ownership", async ()
       create table follows(follower_id uuid, following_id uuid);
       grant select on media_posts to anon, authenticated;
     `);
-    for (const name of ["20261026000500_media_interactions.sql", "20261105000200_comment_threads.sql"]) await db.exec(await readFile(new URL(`../../supabase/migrations/${name}`, import.meta.url), "utf8"));
+    for (const name of ["20261026000500_media_interactions.sql", "20261105000200_comment_threads.sql", "20261110000200_delete_own_comments.sql"]) await db.exec(await readFile(new URL(`../../supabase/migrations/${name}`, import.meta.url), "utf8"));
     await db.query("insert into profiles values ($1,'alice','Alice',null)", [user]);
     await db.query("insert into media_posts values ($1,$3,now()),($2,$3,now())", [post,other,user]);
     await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
@@ -36,5 +36,16 @@ test("comment replies stay one level deep and likes enforce ownership", async ()
     await assert.rejects(insert(root.id), /permission denied/);
     const guest = (await db.query<{ data: { isLiked: boolean }[] }>("select post_comment_page($1,$2) data", [post,root.id])).rows[0].data;
     assert.equal(guest[0].isLiked,false);
+    await assert.rejects(db.query("delete from post_comments where id=$1", [root.id]), /permission denied/);
+    await db.exec("reset role");
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [other]);
+    await db.exec("set role authenticated");
+    assert.equal((await db.query("delete from post_comments where id=$1 returning id", [root.id])).rows.length, 0);
+    await db.exec("reset role");
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
+    await db.exec("set role authenticated");
+    assert.equal((await db.query("delete from post_comments where id=$1 returning id", [root.id])).rows.length, 1);
+    assert.equal((await db.query("select * from post_comments")).rows.length, 0);
+    assert.equal((await db.query("select * from post_comment_likes")).rows.length, 0);
   } finally { await db.close(); }
 });

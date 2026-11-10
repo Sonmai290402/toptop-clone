@@ -76,6 +76,9 @@ export default function Comments({
               key={comment.id}
               comment={comment}
               onReply={setReplyTo}
+              onDeleted={deleted => setReplyTo(current =>
+                current && (current.id === deleted.id || current.parentId === deleted.id) ? null : current
+              )}
             />
           ))}
         </div>

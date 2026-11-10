@@ -183,7 +183,13 @@
     "more": "Load more replies",
     "retry": "Try again",
     "error": "Unable to update comments. Please try again.",
-    "cancel": "Cancel reply"
+    "cancel": "Cancel reply",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "confirmDelete": "Delete this comment? This cannot be undone.",
+    "confirmDeleteThread": "Delete this comment and all its replies? This cannot be undone.",
+    "deleteTitle": "Delete comment",
+    "cancelDelete": "Cancel"
   },
   "postActions": {
     "menu": "Post actions",

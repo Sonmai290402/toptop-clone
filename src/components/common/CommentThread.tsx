@@ -2,41 +2,44 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Heart, ChevronDown, ChevronUp } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCommentActions } from "@/hooks/queries/useCommentActions";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import { usePostComments } from "@/hooks/queries/usePostInteractions";
-import { apiFetch } from "@/lib/api/client";
 import type { PostComment } from "@/lib/post-interactions";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import RelativeTime from "./RelativeTime";
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
 
 export default function CommentThread({
   comment,
   onReply,
   replyingToId,
   child = false,
+  onDeleted,
 }: {
   comment: PostComment;
   onReply: (comment: PostComment) => void;
   replyingToId?: string;
   child?: boolean;
+  onDeleted?: (comment: PostComment) => void;
 }) {
   const t = useTranslations("commentThread");
   const [open, setOpen] = useState(false);
-  const { requireAuth } = useAuth();
-  const client = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { requireAuth, user } = useAuth();
   const replies = usePostComments(comment.postId, !child && open, comment.id);
-  const like = useMutation({
-    mutationFn: () =>
-      apiFetch(`/post-comments/${comment.id}/like`, {
-        method: comment.isLiked ? "DELETE" : "PUT",
-      }),
-    onSuccess: () =>
-      client.invalidateQueries({ queryKey: ["post-comments", comment.postId] }),
-  });
+  const { like, remove, isLiked, likeCount, likeBusy } = useCommentActions(
+    comment,
+    onDeleted,
+  );
   const rows = [
     ...new Map(
       replies.data?.pages
@@ -46,6 +49,48 @@ export default function CommentThread({
   ];
   return (
     <div className="space-y-3">
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={(value) => {
+          if (!remove.isPending) setDeleteOpen(value);
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>{t("deleteTitle")}</DialogTitle>
+          <DialogDescription>
+            {t(
+              !child && comment.replyCount > 0
+                ? "confirmDeleteThread"
+                : "confirmDelete",
+            )}
+          </DialogDescription>
+          {remove.error && (
+            <p role="alert" className="text-sm text-destructive">
+              {t("error")}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              disabled={remove.isPending}
+              onClick={() => setDeleteOpen(false)}
+            >
+              {t("cancelDelete")}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={remove.isPending}
+              onClick={() => {
+                remove.mutate(undefined, {
+                  onSuccess: () => setDeleteOpen(false),
+                });
+              }}
+            >
+              {t(remove.isPending ? "deleting" : "delete")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <div
         data-replying={replyingToId === comment.id || undefined}
         className="flex items-start gap-2 rounded-lg p-2 transition-colors duration-200 data-[replying=true]:bg-primary/10 data-[replying=true]:ring-1 data-[replying=true]:ring-primary/20 motion-reduce:transition-none"
@@ -94,24 +139,37 @@ export default function CommentThread({
               >
                 {t("reply")}
               </Button>
+              {user?.id === comment.author.id && (
+                <button
+                  type="button"
+                  className="text-destructive disabled:opacity-50"
+                  disabled={remove.isPending || likeBusy}
+                  onClick={() => {
+                    remove.reset();
+                    setDeleteOpen(true);
+                  }}
+                >
+                  {t(remove.isPending ? "deleting" : "delete")}
+                </button>
+              )}
             </div>
             <button
               type="button"
-              aria-label={t(comment.isLiked ? "unlike" : "like")}
-              aria-pressed={comment.isLiked}
-              disabled={like.isPending}
+              aria-label={t(isLiked ? "unlike" : "like")}
+              aria-pressed={isLiked}
+              disabled={likeBusy || remove.isPending}
               onClick={() => {
-                if (requireAuth()) like.mutate();
+                if (requireAuth() && !likeBusy) like.mutate(!isLiked);
               }}
               className="flex items-center gap-1 disabled:opacity-50"
             >
               <Heart
-                className={`size-4 ${comment.isLiked ? "fill-primary text-primary" : ""}`}
+                className={`size-4 ${isLiked ? "fill-primary text-primary" : ""}`}
               />
-              {comment.likeCount ?? 0}
+              {likeCount}
             </button>
           </div>
-          {like.error && (
+          {(like.error || remove.error) && (
             <p role="alert" className="text-xs text-destructive">
               {t("error")}
             </p>
@@ -142,6 +200,7 @@ export default function CommentThread({
                   key={reply.id}
                   comment={reply}
                   onReply={onReply}
+                  onDeleted={onDeleted}
                   replyingToId={replyingToId}
                   child
                 />

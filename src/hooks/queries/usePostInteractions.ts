@@ -157,14 +157,14 @@ export function useFollowUser(targetId: string) {
 export function usePostComments(
   postId: string,
   enabled = true,
-  // parentId?: string,
+  parentId?: string,
 ) {
   const { user, isLoading } = useAuth();
   return useInfiniteQuery({
-    queryKey: postCommentsKey(postId, user?.id ?? null),
+    queryKey: [...postCommentsKey(postId, user?.id ?? null), "threads", parentId ?? null],
     queryFn: ({ pageParam, signal }) =>
       apiFetch<CommentPage>(
-        `/posts/${postId}/comments?limit=20&offset=${pageParam}`,
+        `/posts/${postId}/comments?limit=20&offset=${pageParam}${parentId ? `&parentId=${parentId}` : ""}`,
         { signal },
       ),
     initialPageParam: 0,
@@ -175,10 +175,10 @@ export function usePostComments(
 export function useCreatePostComment(postId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (content: string) =>
+    mutationFn: (input: string | { content: string; replyToId?: string }) =>
       apiFetch<{ data: PostComment }>(`/posts/${postId}/comments`, {
         method: "POST",
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(typeof input === "string" ? { content: input } : input),
       }),
     retry: false,
     onSuccess: async () => {
