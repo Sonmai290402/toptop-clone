@@ -6,12 +6,14 @@ import type { Sound, SoundSelection } from "@/lib/sounds";
 import { getSoundMap } from "../sounds/sound.service";
 import { invalidateDiscovery } from "@/server/cache/discovery";
 
-type PostRow = { id: string; user_id: string; mime_type: string; storage_path: string; caption: string; created_at: string; sound_id?: string | null; sound_start_ms?: number; sound_duration_ms?: number | null; music_volume?: number; original_volume?: number };
+type PostRow = { id: string; user_id: string; mime_type: string; storage_path: string; caption: string; created_at: string; pinned_at?: string | null; thumbnail_path?: string | null; sound_id?: string | null; sound_start_ms?: number; sound_duration_ms?: number | null; music_volume?: number; original_volume?: number };
 export function postDto(db: SupabaseClient, row: PostRow, sound?: Sound): MediaPost {
   return {
     id: row.id, userId: row.user_id, mediaType: row.mime_type.startsWith("video/") ? "video" : "image",
     mediaUrl: db.storage.from("posts").getPublicUrl(row.storage_path).data.publicUrl,
     caption: row.caption, createdAt: row.created_at,
+    isPinned: !!row.pinned_at,
+    thumbnailUrl: row.thumbnail_path ? db.storage.from("thumbnails").getPublicUrl(row.thumbnail_path).data.publicUrl : null,
     soundtrack: sound && row.sound_duration_ms ? { sound, soundId: sound.id, startMs: row.sound_start_ms ?? 0, durationMs: row.sound_duration_ms, musicVolume: row.music_volume ?? 1, originalVolume: row.original_volume ?? 1 } : null,
   };
 }

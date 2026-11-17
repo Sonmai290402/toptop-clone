@@ -3,7 +3,7 @@ import { useTranslations as useUiTranslations } from "next-intl";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ImageOff, Pause, Play, VideoOff } from "lucide-react";
+import { ImageOff, Pause, Pin, Play, VideoOff } from "lucide-react";
 import type { VideoData } from "@/types/video.types";
 import Link from "next/link";
 import PostActionsMenu, { type EditablePost } from "./PostActionsMenu";
@@ -51,96 +51,114 @@ export default function VideoCard({ video }: VideoCardProps) {
   if (video.mediaType === "image") {
     return (
       <div className="relative">
-      <Link
-        className="group relative block aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted"
-        href={`/@${video.username}/video/${video.id}`}
-      >
-        {hasError ? (
-          <div
-            role="status"
-            className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-sm text-muted-foreground"
-          >
-            <ImageOff className="size-6" aria-hidden="true" />
-            Unable to load image
+        <Link
+          className="group relative block aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted"
+          href={`/@${video.username}/video/${video.id}`}
+        >
+          {hasError ? (
+            <div
+              role="status"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-sm text-muted-foreground"
+            >
+              <ImageOff className="size-6" aria-hidden="true" />
+              Unable to load image
+            </div>
+          ) : (
+            <Image
+              src={video.videoUrl}
+              alt={video.description || ui("photo_post")}
+              fill
+              unoptimized
+              sizes="(min-width: 1536px) 17vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              onError={() => setHasError(true)}
+              className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+            />
+          )}
+        </Link>
+        {video.post && (
+          <div className="absolute right-2 top-2">
+            <PostActionsMenu post={video.post} />
           </div>
-        ) : (
-          <Image
-            src={video.videoUrl}
-            alt={video.description || ui('photo_post')}
-            fill
-            unoptimized
-            sizes="(min-width: 1536px) 17vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            onError={() => setHasError(true)}
-            className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-          />
         )}
-      </Link>
-      {video.post && <div className="absolute right-2 top-2"><PostActionsMenu post={video.post} /></div>}
+        {video.isPinned && (
+          <span className="absolute left-2 top-2 rounded bg-destructive px-1 py-0.5  text-white">
+            <Pin className="size-4 inline" aria-hidden="true" />
+          </span>
+        )}
       </div>
     );
   }
 
   return (
     <div className="relative">
-    <Link
-      type="button"
-      aria-label={`Preview video: ${video.description}`}
-      aria-pressed={isPlaying}
-      // onClick={() => {
-      //   if (videoRef.current?.paused) playPreview();
-      //   else stopPreview();
-      // }}
-      // onPointerEnter={(event) => {
-      //   if (event.pointerType === "mouse") playPreview();
-      // }}
-      // onPointerLeave={(event) => {
-      //   if (event.pointerType === "mouse") stopPreview();
-      // }}
-      onBlur={stopPreview}
-      href={`/@${video.username}/video/${video.id}`}
-      className="group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-lg bg-muted text-left text-white outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-default"
-    >
-      <video
-        ref={videoRef}
-        src={video.videoUrl}
-        poster={video.posterUrl}
-        muted
-        playsInline
-        loop
-        preload="metadata"
-        aria-hidden="true"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onError={() => setHasError(true)}
-        className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-      />
+      <Link
+        type="button"
+        aria-label={`Preview video: ${video.description}`}
+        aria-pressed={isPlaying}
+        // onClick={() => {
+        //   if (videoRef.current?.paused) playPreview();
+        //   else stopPreview();
+        // }}
+        // onPointerEnter={(event) => {
+        //   if (event.pointerType === "mouse") playPreview();
+        // }}
+        // onPointerLeave={(event) => {
+        //   if (event.pointerType === "mouse") stopPreview();
+        // }}
+        onBlur={stopPreview}
+        href={`/@${video.username}/video/${video.id}`}
+        className="group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-lg bg-muted text-left text-white outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-default"
+      >
+        {video.posterUrl ? (
+          <Image
+            src={video.posterUrl}
+            alt={video.description || ui("photo_post")}
+            fill
+            unoptimized
+            className="object-cover"
+            onError={() => setHasError(true)}
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            src={video.videoUrl}
+            poster={video.posterUrl}
+            muted
+            playsInline
+            loop
+            preload="metadata"
+            aria-hidden="true"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onError={() => setHasError(true)}
+            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+          />
+        )}
 
-      {hasError && (
-        <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted p-3 text-center text-sm text-muted-foreground">
-          <VideoOff className="size-6" aria-hidden="true" />
-          Unable to load video
+        {hasError && (
+          <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted p-3 text-center text-sm text-muted-foreground">
+            <VideoOff className="size-6" aria-hidden="true" />
+            Unable to load video
+          </span>
+        )}
+
+        {video.isPinned && (
+          <span className="absolute left-2 top-2 rounded bg-destructive px-1 py-0.5  text-white">
+            <Pin className="size-4 inline" aria-hidden="true" />
+          </span>
+        )}
+
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+          <span className="rounded-full bg-black/45 p-3">
+            {isPlaying ? (
+              <Pause className="size-6" aria-hidden="true" />
+            ) : (
+              <Play className="size-6" aria-hidden="true" />
+            )}
+          </span>
         </span>
-      )}
 
-      {/* Pin metadata is not available for media posts yet.
-      {video.isPinned && (
-        <span className="absolute left-2 top-2 rounded bg-destructive px-2 py-0.5 text-xs font-semibold text-white">
-          Pinned
-        </span>
-      )}
-      */}
-
-      <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-        <span className="rounded-full bg-black/45 p-3">
-          {isPlaying ? (
-            <Pause className="size-6" aria-hidden="true" />
-          ) : (
-            <Play className="size-6" aria-hidden="true" />
-          )}
-        </span>
-      </span>
-
-      {/* View counts are not available for media posts yet.
+        {/* View counts are not available for media posts yet.
       <span className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-sm font-semibold">
         <Play className="size-4 shrink-0" aria-hidden="true" />
         <span aria-label={`${video.viewCount} views`}>
@@ -148,8 +166,12 @@ export default function VideoCard({ video }: VideoCardProps) {
         </span>
       </span>
       */}
-    </Link>
-    {video.post && <div className="absolute right-2 top-2"><PostActionsMenu post={video.post} /></div>}
+      </Link>
+      {video.post && (
+        <div className="absolute right-2 top-2">
+          <PostActionsMenu post={video.post} />
+        </div>
+      )}
     </div>
   );
 }

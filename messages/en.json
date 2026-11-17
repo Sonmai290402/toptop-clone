@@ -153,7 +153,8 @@
     "you_have_reached_the_end": "You have reached the end.",
     "email_already_registered": "This email is already registered. Sign in with your existing email or Google account.",
     "confirm_password": "Confirm password",
-    "registration_unavailable": "Unable to confirm registration. Please try again."
+    "registration_unavailable": "Unable to confirm registration. Please try again.",
+    "pinned": "Pinned"
   },
   "time": {
     "now": "Now",
@@ -205,6 +206,20 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "pin": "Pin to profile",
+    "unpin": "Unpin",
+    "pinError": "Unable to update pin",
+    "pinLimit": "You can pin up to three posts. Unpin another post first."
+  },
+  "thumbnail": {
+    "title": "Video cover",
+    "hint": "Choose an image up to 10 MB, or pause the video at a frame and select it. Optional; choose before uploading.",
+    "capture": "Use this frame",
+    "upload": "Choose image",
+    "preview": "Selected cover",
+    "remove": "Remove cover",
+    "processing": "Preparing cover...",
+    "error": "Unable to prepare this cover. Choose a JPG, PNG or WebP image up to 10 MB, or try another video frame."
   }
 }

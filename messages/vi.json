@@ -153,7 +153,8 @@
     "you_have_reached_the_end": "Bạn đã xem hết danh sách.",
     "email_already_registered": "Email này đã được đăng ký. Hãy đăng nhập bằng tài khoản email hoặc Google đã có.",
     "confirm_password": "Nhập lại mật khẩu",
-    "registration_unavailable": "Không thể xác nhận đăng ký. Vui lòng thử lại."
+    "registration_unavailable": "Không thể xác nhận đăng ký. Vui lòng thử lại.",
+    "pinned": "Đã ghim"
   },
   "time": {
     "now": "Vừa xong",
@@ -205,6 +206,20 @@
     "cancel": "Hủy",
     "save": "Lưu",
     "saving": "Đang lưu...",
-    "deleting": "Đang xóa..."
+    "deleting": "Đang xóa...",
+    "pin": "Ghim lên hồ sơ",
+    "unpin": "Bỏ ghim",
+    "pinError": "Không thể cập nhật ghim",
+    "pinLimit": "Bạn chỉ có thể ghim 3 bài. Hãy bỏ ghim một bài trước."
+  },
+  "thumbnail": {
+    "title": "Ảnh bìa video",
+    "hint": "Chọn ảnh tối đa 10 MB hoặc dừng video tại khung hình muốn chọn. Không bắt buộc; chọn trước khi tải lên.",
+    "capture": "Dùng khung hình này",
+    "upload": "Chọn ảnh",
+    "preview": "Ảnh bìa đã chọn",
+    "remove": "Bỏ ảnh bìa",
+    "processing": "Đang xử lý ảnh bìa...",
+    "error": "Không thể xử lý ảnh bìa. Chọn ảnh JPG, PNG, WebP tối đa 10 MB hoặc thử khung hình khác."
   }
 }

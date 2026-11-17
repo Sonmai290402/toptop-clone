@@ -13,6 +13,7 @@ export const feedSchema = z.object({
   cursor: z.string().max(2048).optional(),
 }).strict();
 const feedRow = z.object({
+  pinned_at: z.string().nullable().optional(), thumbnail_path: z.string().nullable().optional(),
   ...postSoundFields,
   id: z.uuid(), user_id: z.uuid(), mime_type: z.string(), storage_path: z.string(), caption: z.string(), created_at: z.string(),
   author: z.object({ id: z.uuid(), username: z.string(), displayName: z.string(), avatarUrl: z.string().nullable() }),

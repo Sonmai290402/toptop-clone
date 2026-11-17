@@ -18,12 +18,17 @@ import MediaPlayback from "@/components/common/MediaPlayback";
 import SoundPicker from "@/components/common/SoundPicker";
 import type { PostSound } from "@/lib/sounds";
 import { usePlaybackVolume } from "@/hooks/usePlaybackVolume";
+import ThumbnailPicker from "@/components/common/ThumbnailPicker";
+import { apiFetch } from "@/lib/api/client";
 
 export default function Upload() {
   const ui = useUiTranslations("ui");
   const { user } = useAuth();
   const client = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailBusy, setThumbnailBusy] = useState(false);
+  const uploadedThumbnail = useRef<string | null>(null);
   const [preview, setPreview] = useState("");
   const [caption, setCaption] = useState("");
   const [sound, setSound] = useState<PostSound | null>(null);
@@ -63,6 +68,8 @@ export default function Upload() {
       return;
     }
     setUploadedId(null);
+    setThumbnail(null);
+    uploadedThumbnail.current = null;
     setSound(null);
     setMediaDuration(0);
     setFile(next);
@@ -72,7 +79,7 @@ export default function Upload() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!file || busy) return;
+    if (!file || busy || thumbnailBusy) return;
     const abort = new AbortController();
     controller.current = abort;
     setBusy(true);
@@ -88,7 +95,13 @@ export default function Upload() {
         setUploadedId(id);
       }
       const selection = sound ? { soundId: sound.soundId, startMs: sound.startMs, durationMs: sound.durationMs, musicVolume: sound.musicVolume, originalVolume: sound.originalVolume } : null;
+      if (thumbnail && uploadedThumbnail.current !== id) {
+        await apiFetch(`/uploads/${id}/thumbnail`, { method: "POST", body: thumbnail, headers: { "Content-Type": "image/jpeg" }, signal: abort.signal });
+        uploadedThumbnail.current = id;
+      }
       await publishUpload(id, caption, abort.signal, selection);
+      setThumbnail(null);
+      uploadedThumbnail.current = null;
       setUploadedId(null);
       setFile(null);
       setPreview("");
@@ -136,7 +149,7 @@ export default function Upload() {
               type="file"
               className="w-full min-w-0 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:p-2"
               accept={uploadMimeTypes.join(",")}
-              disabled={busy}
+              disabled={busy || thumbnailBusy}
               onChange={(event) => selectFile(event.target.files?.[0] ?? null)}
             />
           </label>
@@ -171,6 +184,7 @@ export default function Upload() {
             {caption.length} / 2200
           </p>
           {file && <SoundPicker value={sound} onChange={setSound} mediaType={file.type.startsWith("video/") ? "video" : "image"} mediaDuration={mediaDuration} disabled={busy} />}
+          {file?.type.startsWith("video/") && preview && <ThumbnailPicker key={preview} src={preview} value={thumbnail} onChange={setThumbnail} disabled={busy || !!uploadedId} onBusyChange={setThumbnailBusy} />}
           {busy && (
             <div role="status">
               <progress
@@ -197,7 +211,7 @@ export default function Upload() {
           )}
           <button
             type="submit"
-            disabled={!file || busy}
+            disabled={!file || busy || thumbnailBusy}
             className="mt-auto rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy

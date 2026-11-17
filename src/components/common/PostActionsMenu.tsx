@@ -24,7 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-export type EditablePost = { id: string; userId: string; caption: string };
+export type EditablePost = { id: string; userId: string; caption: string; isPinned?: boolean };
 
 function updateCached(
   value: unknown,
@@ -63,6 +63,12 @@ export default function PostActionsMenu({
     defaultValues: { caption: post.caption, expectedCaption: post.caption },
   });
   const caption = useWatch({ control: form.control, name: "caption" });
+  const pin = useMutation({
+    mutationFn: () => apiFetch(`/posts/${post.id}/pin`, { method: post.isPinned ? "DELETE" : "PUT" }),
+    onSuccess: async () => {
+      await Promise.all([client.invalidateQueries({ queryKey: ["posts"] }), client.invalidateQueries({ queryKey: ["my-posts"] }), client.invalidateQueries({ queryKey: ["my-interacted-posts"] })]);
+    },
+  });
   const mutation = useMutation({
     onError: (error) => {
       if (error instanceof ApiClientError && error.status === 409)
@@ -140,6 +146,7 @@ export default function PostActionsMenu({
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled={pin.isPending} onClick={() => pin.mutate()}>{t(post.isPinned ? "unpin" : "pin")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => open("edit")}>
             {t("edit")}
           </DropdownMenuItem>
@@ -151,6 +158,12 @@ export default function PostActionsMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <Dialog open={pin.isError} onOpenChange={value => { if (!value) pin.reset(); }}>
+        <DialogContent>
+          <DialogTitle>{t("pinError")}</DialogTitle>
+          <DialogDescription>{pin.error instanceof ApiClientError && pin.error.code === "PIN_LIMIT" ? t("pinLimit") : t("error")}</DialogDescription>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={mode !== null}
         onOpenChange={(value) => {

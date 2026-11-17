@@ -27,6 +27,8 @@ export async function deletePost(db: SupabaseClient, id: string) {
   try {
     const removed = await db.storage.from("posts").remove([path]);
     if (removed.error) return { cleanupPending: true };
+    const thumbnail = await db.storage.from("thumbnails").remove([path.replace(/\.[^/.]+$/, ".jpg")]);
+    if (thumbnail.error) return { cleanupPending: true };
     const cleared = await db.from("post_file_cleanup").delete().eq("post_id", id);
     return { cleanupPending: !!cleared.error };
   } catch {
@@ -41,10 +43,11 @@ export const postListSchema = z.object({
   mediaType: z.enum(["video", "image"]).optional(),
 }).strict();
 
-const columns = `id,user_id,mime_type,storage_path,caption,created_at,${soundColumns}`;
+const columns = `id,user_id,mime_type,storage_path,caption,created_at,pinned_at,thumbnail_path,${soundColumns}`;
 export async function listPosts(db: SupabaseClient, input: z.infer<typeof postListSchema>, userId?: string) {
   let query = db.from("media_posts").select(columns).not("published_at", "is", null);
   if (userId) query = query.eq("user_id", userId);
+  if (userId) query = query.order("pinned_at", { ascending: false, nullsFirst: false });
   if (input.mediaType) query = query.like("mime_type", `${input.mediaType}/%`);
   const ascending = input.sort === "oldest";
   const { data, error } = await query.order("created_at", { ascending }).order("id", { ascending }).range(input.offset, input.offset + input.limit);

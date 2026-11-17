@@ -1,5 +1,7 @@
 # Backend API — Toptop
 
+Profile pins and video cover uploads: [Pins and thumbnails](./PINS-THUMBNAILS.md).
+
 Owner-only caption editing and post deletion: [Edit and delete posts](./EDIT-POSTS.md).
 
 Redis caches selected public discovery pages and applies distributed action limits.
